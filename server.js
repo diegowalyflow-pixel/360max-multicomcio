@@ -219,6 +219,47 @@ app.get('/api/reportes/hoy', exigirSesion, exigirPagoAlDia, async (req, res) => 
       `SELECT id, total, medio_pago, cliente, creada_en FROM ventas
        WHERE comercio_id = $1 AND creada_en::date = now()::date ORDER BY id DESC LIMIT 15`, [cid]);
     res.json({ ok: true, totales, porMedio, top, ultimas });
+  } catch (e) {
+    res.status(500).json({ ok: false, mensaje: e.message });
+  }
+});
+
+// ── Reportes por rango de fechas ──────────────────────────────────────────
+app.get('/api/reportes/rango', exigirSesion, exigirPagoAlDia, async (req, res) => {
+  try {
+    const cid = req.comercio.id;
+    let desde = String(req.query.desde || '');
+    let hasta = String(req.query.hasta || '');
+    const hoy = new Date();
+    const ahora = `${hoy.getFullYear()}-${String(hoy.getMonth()+1).padStart(2,'0')}-${String(hoy.getDate()).padStart(2,'0')}`;
+    if (!desde || !hasta) {
+      desde = ahora;
+      hasta = ahora;
+    }
+    const desdeSql = `to_date('${desde}','YYYY-MM-DD')`;
+    const hastaSql = `to_date('${hasta}','YYYY-MM-DD')`;
+    const totales = await get(
+      `SELECT COALESCE(SUM(total),0) total,
+              COALESCE(SUM(total - costo_total),0) ganancia,
+              COUNT(*) ventas,
+              COALESCE(SUM(CASE WHEN creada_en::date BETWEEN ${desdeSql} AND ${hastaSql} THEN 1 ELSE 0 END),0) ventas_en_rango,
+              COALESCE(SUM(CASE WHEN creada_en::date BETWEEN ${desdeSql} AND ${hastaSql} THEN total ELSE 0 END),0) total_en_rango,
+              COALESCE(SUM(CASE WHEN creada_en::date BETWEEN ${desdeSql} AND ${hastaSql} THEN total - costo_total ELSE 0 END),0) ganancia_en_rango
+       FROM ventas WHERE comercio_id = $1`, [cid]);
+    const porMedio = await all(
+      `SELECT medio_pago, COALESCE(SUM(total),0) total, COUNT(*) n
+       FROM ventas WHERE comercio_id = $1 AND creada_en::date BETWEEN ${desdeSql} AND ${hastaSql}
+       GROUP BY medio_pago ORDER BY total DESC`, [cid]);
+    const productos = await all(
+      `SELECT vi.nombre, SUM(vi.cantidad) cantidad, SUM(vi.subtotal) subtotal
+       FROM venta_items vi JOIN ventas v ON v.id = vi.venta_id
+       WHERE v.comercio_id = $1 AND v.creada_en::date BETWEEN ${desdeSql} AND ${hastaSql}
+       GROUP BY vi.nombre ORDER BY cantidad DESC LIMIT 10`, [cid]);
+    const porFechas = await all(
+      `SELECT creada_en::date fecha, COUNT(*) n, COALESCE(SUM(total),0) total, COALESCE(SUM(total - costo_total),0) ganancia
+       FROM ventas WHERE comercio_id = $1 AND creada_en::date BETWEEN ${desdeSql} AND ${hastaSql}
+       GROUP BY fecha ORDER BY fecha`, [cid]);
+    res.json({ ok: true, totales, porMedio, productos, porFechas });
   } catch (e) { res.status(500).json({ ok: false, mensaje: e.message }); }
 });
 

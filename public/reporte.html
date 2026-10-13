@@ -42,5 +42,43 @@
       <p style="color:#6b7280">Cargando datos desde el backend...</p>
     </div>
   </main>
+  <script>
+    (function(){
+      var fDesde = document.getElementById('fDesde');
+      var fHasta = document.getElementById('fHasta');
+      var btnConsultar = document.getElementById('btnConsultar');
+      var resumenCard = document.getElementById('resumenCard');
+      var resumenGrid = document.getElementById('resumenGrid');
+      var mediosGrid = document.getElementById('mediosGrid');
+
+      function esc(s){ return String(s==null?'':s).replace(/[&<>]/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;'}[c]; }); }
+      function money(n){ var u=Number(n||0); return '$'+u.toLocaleString('es-AR',{minimumFractionDigits:2,maximumFractionDigits:2}); }
+
+      function loadReport(){
+        var desde = fDesde.value || '';
+        var hasta = fHasta.value || '';
+        if(!desde || !hasta){ alert('Completá Desde y Hasta'); return; }
+        resumenCard.style.display='none';
+        resumenGrid.innerHTML='';
+        mediosGrid.innerHTML='';
+        fetch('/api/reportes/rango?desde='+encodeURIComponent(desde)+'&hasta='+encodeURIComponent(hasta), {credentials:'same-origin'})
+          .then(function(r){ return r.json(); })
+          .then(function(d){
+            if(!d.ok){ alert(d.mensaje || 'Error de consulta'); return; }
+            resumenGrid.innerHTML = '<div class="row"><span class="k">Total ventas</span><span class="v">'+money(d.total||0)+'</span></div>'
+              + '<div class="row"><span class="k">Ganancia</span><span class="v">'+money(d.ganancia||0)+'</span></div>'
+              + '<div class="row"><span class="k">Ventas</span><span class="v">'+(d.ventas||0)+'</span></div>'
+              + '<div class="row"><span class="k">En rango</span><span class="v">'+(d.ventas_en_rango||0)+'</span></div>';
+            resumenCard.style.display='block';
+          })
+          .catch(function(){ alert('Error de conexión'); });
+      }
+
+      btnConsultar.addEventListener('click', loadReport);
+      if(fDesde){ fDesde.value = fDesde.value || new Date().toISOString().slice(0,10); }
+      if(fHasta){ fHasta.value = fHasta.value || new Date().toISOString().slice(0,10); }
+    })();
+  </script>
+</body>
 </body>
 </html>
