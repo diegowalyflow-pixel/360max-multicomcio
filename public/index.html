@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>360MAX Comercios — Ingresar</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{
+    font-family:'Segoe UI',system-ui,Arial,sans-serif;color:#1f2937;
+    background:linear-gradient(160deg,#2e1065 0%,#5b21b6 50%,#ede9fe 100%);
+    display:flex;align-items:center;justify-content:center;padding:20px;
+  }
+  .card{
+    width:100%;max-width:400px;background:#fff;border-radius:20px;
+    padding:38px 34px;box-shadow:0 30px 70px rgba(46,16,101,.4);
+  }
+  .logo{display:flex;flex-direction:column;align-items:center;margin-bottom:8px}
+  .logo .mark{
+    width:74px;height:74px;border-radius:18px;display:flex;align-items:center;justify-content:center;
+    background:linear-gradient(145deg,#6d28d9,#4c1d95);color:#fff;font-weight:800;font-size:24px;letter-spacing:1px;
+    box-shadow:0 12px 30px rgba(76,29,149,.4);
+  }
+  h1{margin-top:16px;font-size:22px;font-weight:800;text-align:center;color:#4c1d95}
+  .sub{text-align:center;color:#6b7280;font-size:13.5px;margin:6px 0 24px}
+  label{display:block;font-size:13px;font-weight:600;color:#374151;margin:14px 0 6px}
+  input{
+    width:100%;padding:12px 14px;border:1.5px solid #e5e7eb;border-radius:11px;font-size:15px;
+    transition:border-color .15s, box-shadow .15s;background:#fafafa;
+  }
+  input:focus{outline:none;border-color:#7c3aed;box-shadow:0 0 0 3px rgba(124,58,237,.15);background:#fff}
+  button{
+    width:100%;margin-top:22px;padding:13px;border:0;border-radius:11px;cursor:pointer;
+    background:linear-gradient(145deg,#7c3aed,#5b21b6);color:#fff;font-size:15.5px;font-weight:700;
+    box-shadow:0 10px 24px rgba(91,33,182,.35);transition:transform .08s;
+  }
+  button:active{transform:translateY(1px)}
+  button:disabled{opacity:.6;cursor:default}
+  .msg{
+    display:none;margin-top:16px;padding:11px 14px;border-radius:10px;font-size:13.5px;text-align:center;
+    background:#fef2f2;color:#b91c1c;border:1px solid #fecaca;
+  }
+  .msg.show{display:block}
+  .foot{margin-top:20px;text-align:center;font-size:11.5px;color:#9ca3af;letter-spacing:2px;font-weight:700}
+</style>
+</head>
+<body>
+  <div class="card">
+    <div class="logo"><div class="mark">360</div></div>
+    <h1>360MAX Comercios</h1>
+    <p class="sub">Ingresá con tu usuario para continuar</p>
+
+    <form id="login" autocomplete="off">
+      <label for="usuario">Usuario</label>
+      <input id="usuario" name="usuario" type="text" required autofocus>
+
+      <label for="clave">Contraseña</label>
+      <input id="clave" name="clave" type="password" required>
+
+      <button type="submit" id="btn">Continuar</button>
+    </form>
+
+    <div class="msg" id="msg"></div>
+    <p class="foot">3 6 0 M A X</p>
+  </div>
+
+<script>
+(function(){
+  var form = document.getElementById('login');
+  var msg  = document.getElementById('msg');
+  var btn  = document.getElementById('btn');
+
+  function error(t){ msg.textContent = t; msg.classList.add('show'); }
+  function limpiar(){ msg.classList.remove('show'); }
+
+  async function api(ruta, opciones){
+    var r = await fetch(ruta, {
+      method: (opciones && opciones.method) || 'GET',
+      headers: { 'Content-Type': 'application/json' },
+      body: opciones && opciones.body ? JSON.stringify(opciones.body) : undefined,
+      credentials: 'same-origin'
+    });
+    var data = {};
+    try { data = await r.json(); } catch(e){}
+    return { status: r.status, data: data };
+  }
+
+  form.addEventListener('submit', async function(ev){
+    ev.preventDefault();
+    limpiar();
+    var usuario = document.getElementById('usuario').value.trim().toLowerCase();
+    var clave   = document.getElementById('clave').value;
+    if(!usuario || !clave){ return error('Completá usuario y contraseña.'); }
+
+    btn.disabled = true; btn.textContent = 'Ingresando…';
+    try {
+      var r = await api('/api/login', { method: 'POST', body: { usuario: usuario, clave: clave } });
+      if (r.status === 200 && r.data.ok){
+        window.location.href = '/panel';
+        return;
+      }
+      error(r.data.mensaje || 'Usuario o contraseña incorrectos.');
+    } catch(e){
+      error('No se pudo conectar con el servidor.');
+    } finally {
+      btn.disabled = false; btn.textContent = 'Continuar';
+    }
+  });
+})();
+</script>
+</body>
+</html>
