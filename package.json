@@ -4,7 +4,9 @@
   "description": "360MAX Multi-Comercio - catalogo multi-tenant sobre PostgreSQL (Render)",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js"
+    "start": "node server.js",
+    "migrar-pos": "node migrar-pos.js",
+    "cargar-lista": "node cargar-lista.js"
   },
   "license": "UNLICENSED",
   "type": "commonjs",

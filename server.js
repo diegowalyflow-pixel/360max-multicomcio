@@ -117,6 +117,169 @@ app.post('/api/comercio/estado', exigirSesion, async (req, res) => {
   } catch (e) { res.status(500).json({ ok: false, mensaje: e.message }); }
 });
 
+// ═════════════════════════════════════════════════════════════════════════════
+//  POS 360MAX — CAJA (aislado por comercio)
+// ═════════════════════════════════════════════════════════════════════════════
+function precioDe(p) {
+  const fijo = p.precio_fijo != null && p.precio_fijo !== '' ? Number(p.precio_fijo) : null;
+  return fijo != null ? fijo : Number(p.precio || 0);
+}
+
+app.get('/api/caja/actual', exigirSesion, exigirPagoAlDia, async (req, res) => {
+  try {
+    const caja = await get("SELECT * FROM cajas WHERE comercio_id = $1 AND estado = 'abierta' ORDER BY id DESC LIMIT 1", [req.comercio.id]);
+    res.json({ ok: true, caja: caja || null });
+  } catch (e) { res.status(500).json({ ok: false, mensaje: e.message }); }
+});
+
+app.post('/api/caja/abrir', exigirSesion, exigirPagoAlDia, async (req, res) => {
+  try {
+    const abierta = await get("SELECT id FROM cajas WHERE comercio_id = $1 AND estado = 'abierta'", [req.comercio.id]);
+    if (abierta) return res.status(400).json({ ok: false, mensaje: 'Ya hay una caja abierta' });
+    const inicial = Number(req.body && req.body.saldo_inicial || 0);
+    const r = await run(
+      "INSERT INTO cajas (comercio_id, usuario_id, saldo_inicial) VALUES ($1, $2, $3) RETURNING *",
+      [req.comercio.id, req.usuarioSesion.id, inicial]);
+    res.json({ ok: true, caja: r.rows[0] });
+  } catch (e) { res.status(500).json({ ok: false, mensaje: e.message }); }
+});
+
+app.post('/api/caja/cerrar', exigirSesion, exigirPagoAlDia, async (req, res) => {
+  try {
+    const caja = await get("SELECT * FROM cajas WHERE comercio_id = $1 AND estado = 'abierta' ORDER BY id DESC LIMIT 1", [req.comercio.id]);
+    if (!caja) return res.status(400).json({ ok: false, mensaje: 'No hay caja abierta' });
+    const conteo = Number(req.body && req.body.saldo_contado || 0);
+    const r = await run(
+      "UPDATE cajas SET estado='cerrada', saldo_final=$1, cerrada_en=now() WHERE id=$2 RETURNING *",
+      [conteo, caja.id]);
+    res.json({ ok: true, caja: r.rows[0] });
+  } catch (e) { res.status(500).json({ ok: false, mensaje: e.message }); }
+});
+
+// ═════════════════════════════════════════════════════════════════════════════
+//  POS 360MAX — COBRO + REPORTES
+// ═════════════════════════════════════════════════════════════════════════════
+app.post('/api/ventas', exigirSesion, exigirPagoAlDia, async (req, res) => {
+  const { items, medio_pago, cliente } = req.body || {};
+  if (!Array.isArray(items) || !items.length) return res.status(400).json({ ok: false, mensaje: 'Carrito vacío' });
+  const { pool } = require('./db-pg');
+  const c = await pool.connect();
+  try {
+    await c.query('BEGIN');
+    let total = 0, costo = 0;
+    const detalle = [];
+    for (const it of items) {
+      const pid = Number(it.producto_id);
+      const cant = Number(it.cantidad || 1);
+      if (!pid || cant <= 0) throw new Error('Item inválido');
+      const p = (await c.query('SELECT * FROM productos WHERE id = $1 AND comercio_id = $2 FOR UPDATE', [pid, req.comercio.id])).rows[0];
+      if (!p) throw new Error('Producto no encontrado');
+      const precio = it.precio != null && it.precio !== '' ? Number(it.precio) : precioDe(p);
+      const sub = Math.round(precio * cant * 100) / 100;
+      total += sub; costo += Math.round(Number(p.costo || 0) * cant * 100) / 100;
+      await c.query('UPDATE productos SET stock = stock - $1 WHERE id = $2', [cant, pid]);
+      detalle.push({ producto_id: pid, nombre: p.nombre, cantidad: cant, precio_unit: precio, costo_unit: Number(p.costo || 0), subtotal: sub });
+    }
+    total = Math.round(total * 100) / 100; costo = Math.round(costo * 100) / 100;
+    const caja = (await c.query("SELECT id FROM cajas WHERE comercio_id = $1 AND estado='abierta' ORDER BY id DESC LIMIT 1", [req.comercio.id])).rows[0];
+    const v = (await c.query(
+      "INSERT INTO ventas (comercio_id, caja_id, usuario_id, total, costo_total, medio_pago, cliente) VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING id",
+      [req.comercio.id, caja ? caja.id : null, req.usuarioSesion.id, total, costo, medio_pago || 'efectivo', cliente || null])).rows[0];
+    for (const d of detalle) {
+      await c.query(
+        "INSERT INTO venta_items (venta_id, producto_id, nombre, cantidad, precio_unit, costo_unit, subtotal) VALUES ($1,$2,$3,$4,$5,$6,$7)",
+        [v.id, d.producto_id, d.nombre, d.cantidad, d.precio_unit, d.costo_unit, d.subtotal]);
+    }
+    if (caja) await c.query("UPDATE cajas SET total_ventas = total_ventas + $1, cant_ventas = cant_ventas + 1 WHERE id = $2", [total, caja.id]);
+    await c.query('COMMIT');
+    res.json({ ok: true, venta_id: v.id, total, costo_total: costo, ganancia: Math.round((total - costo) * 100) / 100 });
+  } catch (e) {
+    await c.query('ROLLBACK');
+    res.status(400).json({ ok: false, mensaje: e.message });
+  } finally { c.release(); }
+});
+
+app.get('/api/reportes/hoy', exigirSesion, exigirPagoAlDia, async (req, res) => {
+  try {
+    const cid = req.comercio.id;
+    const totales = await get(
+      `SELECT COALESCE(SUM(total),0) total, COALESCE(SUM(total - costo_total),0) ganancia, COUNT(*) ventas
+       FROM ventas WHERE comercio_id = $1 AND creada_en::date = now()::date`, [cid]);
+    const porMedio = await all(
+      `SELECT medio_pago, COALESCE(SUM(total),0) total, COUNT(*) n
+       FROM ventas WHERE comercio_id = $1 AND creada_en::date = now()::date
+       GROUP BY medio_pago ORDER BY total DESC`, [cid]);
+    const top = await all(
+      `SELECT vi.nombre, SUM(vi.cantidad) cantidad, SUM(vi.subtotal) subtotal
+       FROM venta_items vi JOIN ventas v ON v.id = vi.venta_id
+       WHERE v.comercio_id = $1 AND v.creada_en::date = now()::date
+       GROUP BY vi.nombre ORDER BY cantidad DESC LIMIT 10`, [cid]);
+    const ultimas = await all(
+      `SELECT id, total, medio_pago, cliente, creada_en FROM ventas
+       WHERE comercio_id = $1 AND creada_en::date = now()::date ORDER BY id DESC LIMIT 15`, [cid]);
+    res.json({ ok: true, totales, porMedio, top, ultimas });
+  } catch (e) { res.status(500).json({ ok: false, mensaje: e.message }); }
+});
+
+// ═════════════════════════════════════════════════════════════════════════════
+//  POS 360MAX — PRODUCTOS (crear / editar / stock / borrar)
+// ═════════════════════════════════════════════════════════════════════════════
+app.post('/api/productos', exigirSesion, exigirPagoAlDia, async (req, res) => {
+  try {
+    const rol = String(req.usuarioSesion.rol || '').toLowerCase();
+    if (rol === 'cajero') return res.status(403).json({ ok: false, mensaje: 'Sin permiso' });
+    const { nombre, categoria, codigo_barra, costo, precio, precio_fijo, stock } = req.body || {};
+    if (!nombre) return res.status(400).json({ ok: false, mensaje: 'Falta el nombre' });
+    const r = await run(
+      `INSERT INTO productos (comercio_id, nombre, categoria, codigo_barra, costo, precio, precio_fijo, stock)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8) RETURNING *`,
+      [req.comercio.id, nombre, categoria || null, codigo_barra || null,
+       Number(costo || 0), Number(precio || 0), precio_fijo != null && precio_fijo !== '' ? Number(precio_fijo) : null,
+       Number(stock || 0)]);
+    res.json({ ok: true, producto: r.rows[0] });
+  } catch (e) {
+    if (e.code === '23505') return res.status(400).json({ ok: false, mensaje: 'Ya existe un producto con ese código de barras' });
+    res.status(500).json({ ok: false, mensaje: e.message });
+  }
+});
+
+app.put('/api/productos/:id', exigirSesion, exigirPagoAlDia, async (req, res) => {
+  try {
+    const rol = String(req.usuarioSesion.rol || '').toLowerCase();
+    if (rol === 'cajero') return res.status(403).json({ ok: false, mensaje: 'Sin permiso' });
+    const { nombre, categoria, codigo_barra, costo, precio, precio_fijo } = req.body || {};
+    const r = await run(
+      `UPDATE productos SET nombre=$1, categoria=$2, codigo_barra=$3, costo=$4, precio=$5, precio_fijo=$6
+       WHERE id=$7 AND comercio_id=$8 RETURNING *`,
+      [nombre, categoria || null, codigo_barra || null, Number(costo || 0), Number(precio || 0),
+       precio_fijo != null && precio_fijo !== '' ? Number(precio_fijo) : null,
+       Number(req.params.id), req.comercio.id]);
+    if (!r.rows.length) return res.status(404).json({ ok: false, mensaje: 'No encontrado' });
+    res.json({ ok: true, producto: r.rows[0] });
+  } catch (e) { res.status(500).json({ ok: false, mensaje: e.message }); }
+});
+
+app.post('/api/productos/:id/stock', exigirSesion, exigirPagoAlDia, async (req, res) => {
+  try {
+    const cantidad = Number(req.body && req.body.cantidad);
+    if (!cantidad) return res.status(400).json({ ok: false, mensaje: 'Cantidad inválida' });
+    const r = await run(
+      'UPDATE productos SET stock = stock + $1 WHERE id = $2 AND comercio_id = $3 RETURNING *',
+      [cantidad, Number(req.params.id), req.comercio.id]);
+    if (!r.rows.length) return res.status(404).json({ ok: false, mensaje: 'No encontrado' });
+    res.json({ ok: true, producto: r.rows[0] });
+  } catch (e) { res.status(500).json({ ok: false, mensaje: e.message }); }
+});
+
+app.delete('/api/productos/:id', exigirSesion, exigirPagoAlDia, async (req, res) => {
+  try {
+    const rol = String(req.usuarioSesion.rol || '').toLowerCase();
+    if (rol !== 'dueno' && rol !== 'administrador') return res.status(403).json({ ok: false, mensaje: 'Solo dueño/admin' });
+    await run('DELETE FROM productos WHERE id = $1 AND comercio_id = $2', [Number(req.params.id), req.comercio.id]);
+    res.json({ ok: true });
+  } catch (e) { res.status(500).json({ ok: false, mensaje: e.message }); }
+});
+
 // ── Vistas ──────────────────────────────────────────────────────────────────
 app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'public', 'index.html')));
 
