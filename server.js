@@ -174,6 +174,7 @@ app.post('/api/ventas', exigirSesion, exigirPagoAlDia, async (req, res) => {
       if (!pid || cant <= 0) throw new Error('Item inválido');
       const p = (await c.query('SELECT * FROM productos WHERE id = $1 AND comercio_id = $2 FOR UPDATE', [pid, req.comercio.id])).rows[0];
       if (!p) throw new Error('Producto no encontrado');
+      if (cant > Number(p.stock || 0)) throw new Error('Stock insuficiente de ' + p.nombre + ' (quedan ' + Number(p.stock || 0) + ')');
       const precio = it.precio != null && it.precio !== '' ? Number(it.precio) : precioDe(p);
       const sub = Math.round(precio * cant * 100) / 100;
       total += sub; costo += Math.round(Number(p.costo || 0) * cant * 100) / 100;
