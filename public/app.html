@@ -87,6 +87,20 @@
     .btn-primario { padding: 12px; font-size: 15px; }
     .btn-secundario { padding: 11px; font-size: 13px; }
   }
+  @media (max-width: 680px) {
+    .kpi { grid-template-columns: 1fr; gap: 10px; }
+    .tarjeta { padding: 12px; }
+    .lista-item { font-size: 13px; }
+    .pill { font-size: 10.5px; padding: 3px 8px; }
+    .total-linea { font-size: 18px; }
+    .btn-primario { padding: 12px; font-size: 15px; }
+    .btn-secundario { padding: 11px; font-size: 13px; }
+    .carrito-bar { padding: 12px 12px; }
+    .carrito-bar .t { font-size: 18px; }
+    .carrito-bar .go { padding: 10px 14px; font-size: 13px; }
+    .carrito-bar .sel { padding: 8px 10px; font-size: 12px; }
+    #estadoCarga { display: none; text-align: center; padding: 8px 0; color: #9ca3af; font-size: 13px; }
+  }
 </style>
 </head>
 <body>
@@ -115,7 +129,7 @@
         <span class="contador" id="contador">—</span>
       </div>
       <div class="grid" id="catalogo"></div>
-      <div class="vacio" id="vacio">No hay productos cargados todavía.</div>
+      <div id="estadoCarga" class="aviso" style="display:none">Cargando productos...</div>
     </section>
 
     <!-- PRODUCTOS -->
