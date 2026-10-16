@@ -322,7 +322,94 @@ app.delete('/api/productos/:id', exigirSesion, exigirPagoAlDia, async (req, res)
   } catch (e) { res.status(500).json({ ok: false, mensaje: e.message }); }
 });
 
+// ── Clientes y cuenta corriente ──
+app.get('/api/clientes', exigirSesion, exigirPagoAlDia, async (req, res) => {
+  try {
+    const q = String(req.query.q || '');
+    const rows = await all(q ? 'SELECT * FROM clientes WHERE comercio_id = $1 AND (nombre ILIKE $2 OR telefono ILIKE $2) ORDER BY nombre' : 'SELECT * FROM clientes WHERE comercio_id = $1 ORDER BY nombre', [req.comercio.id, '%' + q + '%']);
+    res.json({ ok: true, clientes: rows });
+  } catch (e) { res.status(500).json({ ok: false, mensaje: e.message }); }
+});
+
+app.post('/api/clientes', exigirSesion, exigirPagoAlDia, async (req, res) => {
+  try {
+    const { nombre, telefono } = req.body || {};
+    if (!nombre) return res.status(400).json({ ok: false, mensaje: 'Falta el nombre' });
+    const r = await run('INSERT INTO clientes (comercio_id, nombre, telefono) VALUES ($1,$2,$3) RETURNING *', [req.comercio.id, nombre, telefono || null]);
+    res.json({ ok: true, cliente: r.rows[0] });
+  } catch (e) { res.status(500).json({ ok: false, mensaje: e.message }); }
+});
+
+app.get('/api/clientes/:id', exigirSesion, exigirPagoAlDia, async (req, res) => {
+  try {
+    const c = await get('SELECT * FROM clientes WHERE id = $1 AND comercio_id = $2', [Number(req.params.id), req.comercio.id]);
+    if (!c) return res.status(404).json({ ok: false, mensaje: 'No encontrado' });
+    const movs = await all('SELECT * FROM clientes_movimientos WHERE cliente_id = $1 ORDER BY creada_en DESC LIMIT 50', [Number(req.params.id)]);
+    res.json({ ok: true, cliente: c, movimientos: movs });
+  } catch (e) { res.status(500).json({ ok: false, mensaje: e.message }); }
+});
+
+app.post('/api/clientes/:id/pago', exigirSesion, exigirPagoAlDia, async (req, res) => {
+  try {
+    const { importe, motivo } = req.body || {};
+    if (!importe || Number(importe) <= 0) return res.status(400).json({ ok: false, mensaje: 'Importe inválido' });
+    const id = Number(req.params.id);
+    await run('BEGIN');
+    await run('UPDATE clientes SET saldo = saldo - $1 WHERE id = $2 AND comercio_id = $3', [importe, id, req.comercio.id]);
+    await run('INSERT INTO clientes_movimientos (cliente_id, tipo, importe, motivo) VALUES ($1,\'pago\',$2,$3)', [id, importe, motivo || '']);
+    await c.query('COMMIT');
+    res.json({ ok: true });
+  } catch (e) { await c.query('ROLLBACK'); res.status(500).json({ ok: false, mensaje: e.message }); }
+});
+
+// ── Listar ventas (para devoluciones/historial) ──
+app.get('/api/ventas', exigirSesion, exigirPagoAlDia, async (req, res) => {
+  try {
+    const caja = await get("SELECT id FROM cajas WHERE comercio_id = $1 AND estado = 'abierta' ORDER BY id DESC LIMIT 1", [req.comercio.id]);
+    const rows = await all('SELECT id, total, medio_pago, cliente, creada_en FROM ventas WHERE comercio_id = $1' + (caja ? ' AND caja_id = $2' : '') + ' ORDER BY id DESC LIMIT 50', caja ? [req.comercio.id, caja.id] : [req.comercio.id]);
+    res.json({ ok: true, ventas: rows });
+  } catch (e) { res.status(500).json({ ok: false, mensaje: e.message }); }
+});
+
 // ── Vistas ──────────────────────────────────────────────────────────────────
+// ── Ruta directa a la Caja POS ──
+app.get('/caja', exigirSesion, exigirPagoAlDia, (req, res) => res.sendFile(path.join(__dirname, 'public', 'caja.html')));
+
+// ── Estado del turno (caja abierta) ──
+app.get('/api/caja/estado', exigirSesion, exigirPagoAlDia, async (req, res) => {
+  try {
+    const caja = await get("SELECT * FROM cajas WHERE comercio_id = $1 AND estado = 'abierta' ORDER BY id DESC LIMIT 1", [req.comercio.id]);
+    if (!caja) return res.json({ ok: true, turno: null });
+    const ventas = await get("SELECT COUNT(*) AS n, COALESCE(SUM(total),0) AS total FROM ventas WHERE comercio_id = $1 AND caja_id = $2", [req.comercio.id, caja.id]);
+    const u = await get('SELECT nombre FROM usuarios WHERE id = $1', [caja.usuario_id]);
+    res.json({ ok: true, turno: { caja: caja.id, usuario: u ? u.nombre : '—', fecha_apertura: caja.abierta_en, fondo: Number(caja.saldo_inicial || 0), ventas_n: Number(ventas.n || 0), ventas_total: Number(ventas.total || 0) }, cierre_anterior: null });
+  } catch (e) { res.status(500).json({ ok: false, mensaje: e.message }); }
+});
+
+// ── Arqueo de caja ──
+app.get('/api/caja/arqueo', exigirSesion, exigirPagoAlDia, async (req, res) => {
+  try {
+    const caja = await get("SELECT * FROM cajas WHERE comercio_id = $1 AND estado = 'abierta' ORDER BY id DESC LIMIT 1", [req.comercio.id]);
+    if (!caja) return res.json({ ok: true, turno: null });
+    const ventas = await get("SELECT COUNT(*) AS n, COALESCE(SUM(total),0) AS total FROM ventas WHERE comercio_id = $1 AND caja_id = $2", [req.comercio.id, caja.id]);
+    const porMedio = await all("SELECT medio_pago, COALESCE(SUM(total),0) AS monto, COUNT(*) AS n FROM ventas WHERE comercio_id = $1 AND caja_id = $2 GROUP BY medio_pago ORDER BY monto DESC", [req.comercio.id, caja.id]);
+    const movimientos = await all("SELECT tipo, importe, motivo, creada_en FROM movimientos_caja WHERE comercio_id = $1 AND (caja_id = $2 OR caja_id IS NULL) ORDER BY creada_en DESC LIMIT 20", [req.comercio.id, caja.id]);
+    let esperado = Number(caja.saldo_inicial || 0) + Number(caja.total_ventas || 0);
+    for (const m of movimientos) { if (m.tipo === 'ingreso') esperado += Number(m.importe || 0); else esperado -= Number(m.importe || 0); }
+    res.json({ ok: true, turno: { caja: caja.id, usuario: 'Cajero', fechaapertura: caja.abierta_en, fondo: Number(caja.saldo_inicial || 0), ventasn: Number(ventas.n || 0), ventastotal: Number(ventas.total || 0) }, esperado, pagos: porMedio.map(p => ({ medio: p.medio_pago, monto: Number(p.monto || 0) })), movimientos: movimientos.map(m => ({ tipo: m.tipo, motivo: m.motivo || '', importe: Number(m.importe || 0) })) });
+  } catch (e) { res.status(500).json({ ok: false, mensaje: e.message }); }
+});
+
+// ── Movimiento de caja ──
+app.post('/api/caja/movimiento', exigirSesion, exigirPagoAlDia, async (req, res) => {
+  try {
+    const { tipo, importe, motivo } = req.body || {};
+    if (!tipo || !importe) return res.status(400).json({ ok: false, mensaje: 'Tipo e importe requeridos' });
+    const caja = await get("SELECT id FROM cajas WHERE comercio_id = $1 AND estado = 'abierta' ORDER BY id DESC LIMIT 1", [req.comercio.id]);
+    const r = await run('INSERT INTO movimientos_caja (comercio_id, caja_id, tipo, importe, motivo, usuario_id) VALUES ($1,$2,$3,$4,$5,$6) RETURNING *', [req.comercio.id, caja ? caja.id : null, tipo, Number(importe), motivo || '', req.usuarioSesion.id]);
+    res.json({ ok: true, movimiento: r.rows[0] });
+  } catch (e) { res.status(500).json({ ok: false, mensaje: e.message }); }
+});
 app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'public', 'index.html')));
 
 // Panel protegido: si el comercio está suspendido, exigirPagoAlDia corta con la

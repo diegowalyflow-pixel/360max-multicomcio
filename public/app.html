@@ -77,17 +77,14 @@
   .exito{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:#fff;border-radius:18px;padding:30px 34px;text-align:center;z-index:60;box-shadow:0 20px 60px rgba(0,0,0,.3);display:none}
   .exito .ico{font-size:46px}
   .exito h3{color:#16a34a;font-size:20px;margin:8px 0}
+  .home-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:11px;margin:14px 0}
+  .mod{background:#fff;border:1px solid #ece7fb;border-radius:16px;padding:16px 8px;text-align:center;cursor:pointer;box-shadow:0 4px 14px rgba(76,29,149,.06)}
+  .mod:active{transform:scale(.97)}
+  .mod .ico{font-size:26px}
+  .mod .t{font-weight:800;font-size:13px;color:#312e81;margin-top:6px}
+  .mod .s{font-size:11px;color:#8b5cf6;font-weight:700}
   .foot{text-align:center;margin:26px 0 6px;font-size:11px;color:#a78bfa;letter-spacing:3px;font-weight:700}
 @media (max-width: 680px) {
-    .kpi { grid-template-columns: 1fr; gap: 10px; }
-    .tarjeta { padding: 12px; }
-    .lista-item { font-size: 13px; }
-    .pill { font-size: 10.5px; padding: 3px 8px; }
-    .total-linea { font-size: 18px; }
-    .btn-primario { padding: 12px; font-size: 15px; }
-    .btn-secundario { padding: 11px; font-size: 13px; }
-  }
-  @media (max-width: 680px) {
     .kpi { grid-template-columns: 1fr; gap: 10px; }
     .tarjeta { padding: 12px; }
     .lista-item { font-size: 13px; }
@@ -115,15 +112,42 @@
 
   <main>
     <div class="tabs">
+      <button data-v="inicio" class="activo">Inicio</button>
       <button data-v="vender">Vender</button>
       <button data-v="productos">Productos</button>
       <button data-v="caja">Caja</button>
-      <button data-v="v-ganancias">Ganancias</button>
-      <button data-v="v-reportes">Reportes</button>
+      <button data-v="ganancias">Ganancias</button>
+      <button data-v="reportes">Reportes</button>
     </div>
 
+    <!-- INICIO: portada morada 9 módulos + resumen (solo vista, no borra nada) -->
+    <section class="vista activa" id="v-inicio">
+      <div class="tarjeta" style="background:linear-gradient(120deg,#4c1d95,#6d28d9);border:0;color:#fff">
+        <div style="display:flex;align-items:center;gap:12px">
+          <div style="width:46px;height:46px;border-radius:13px;background:rgba(255,255,255,.18);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:18px;border:1px solid rgba(255,255,255,.4)">360</div>
+          <div><div id="homeComercio" style="font-weight:800;font-size:17px">Mi Comercio</div><div style="font-size:12px;opacity:.85">Panel multicomercio · hoy</div></div>
+        </div>
+        <div class="kpi" style="margin:14px 0 0">
+          <div class="b"><div class="v" id="homeVentasHoy">$0</div><div class="l">Vendido hoy</div></div>
+          <div class="b"><div class="v" id="homeTickets">0</div><div class="l">Tickets</div></div>
+        </div>
+      </div>
+      <div class="home-grid">
+        <div class="mod" data-go="vender"><div class="ico">🧾</div><div class="t">Vender</div><div class="s">Cobrar</div></div>
+        <div class="mod" data-go="productos"><div class="ico">📦</div><div class="t">Productos</div><div class="s">Stock</div></div>
+        <div class="mod" data-go="caja"><div class="ico">💰</div><div class="t">Caja</div><div class="s" id="homeCajaEstado">Cerrada</div></div>
+        <div class="mod" data-go="v-ganancias"><div class="ico">📈</div><div class="t">Ganancias</div><div class="s">Margen</div></div>
+        <div class="mod" data-go="v-reportes"><div class="ico">📊</div><div class="t">Reportes</div><div class="s">Hoy</div></div>
+        <div class="mod" data-go="vender"><div class="ico">👥</div><div class="t">Clientes</div><div class="s">Pronto</div></div>
+        <div class="mod" data-go="productos"><div class="ico">🏷️</div><div class="t">Categorías</div><div class="s">Ordenar</div></div>
+        <div class="mod" data-go="caja"><div class="ico">🧮</div><div class="t">Arqueo</div><div class="s">Cierre</div></div>
+        <div class="mod" data-go="v-reportes"><div class="ico">⚙️</div><div class="t">Ajustes</div><div class="s">Comercio</div></div>
+      </div>
+      <div class="aviso">Portada nueva: toca un módulo para ir a su función. Tus pestañas siguen igual abajo.</div>
+    </section>
+
     <!-- VENDER -->
-    <section class="vista activa" id="v-vender">
+    <section class="vista" id="v-vender">
       <div class="toolbar">
         <input id="buscador" type="text" placeholder="Buscar producto o código…" autocomplete="off">
         <span class="contador" id="contador">—</span>
@@ -162,6 +186,19 @@
     <!-- REPORTES -->
     <section class="vista" id="v-reportes">
       <div id="reporteCuerpo"></div>
+    </section>
+
+    <!-- GANANCIAS -->
+    <section class="vista" id="v-ganancias">
+      <div class="tarjeta">
+        <h2 style="font-size:16px;color:#4c1d95;margin-bottom:12px">Ganancia hoy</h2>
+        <div class="kpi" style="margin-top:12px">
+          <div class="b"><div class="v" id="gananciaHoy">$0</div><div class="l">Ganancia neta</div></div>
+          <div class="b"><div class="v" id="ventasHoy">0</div><div class="l">Ventas</div></div>
+          <div class="b"><div class="v" id="ticketProm">$0</div><div class="l">Ticket promedio</div></div>
+        </div>
+        <div class="aviso" style="margin-top:14px;color:#6b7280">Los datos se actualizan al abrir esta pestaña.</div>
+      </div>
     </section>
   </main>
 
@@ -222,12 +259,25 @@
   rol = String(s.data.usuario.rol||'cajero').toLowerCase();
 
   document.querySelectorAll('.tabs button').forEach(function(b){
-    b.addEventListener('click',function(){
+    b.addEventListener('click',async function(){
       document.querySelectorAll('.tabs button').forEach(function(x){x.classList.remove('activo');});
       document.querySelectorAll('.vista').forEach(function(x){x.classList.remove('activa');});
       b.classList.add('activo'); document.getElementById('v-'+b.dataset.v).classList.add('activa');
       document.getElementById('carritoBar').style.display=(b.dataset.v==='vender')?'flex':'none';
-      if(b.dataset.v==='caja')cargarCaja(); if(b.dataset.v==='reportes')cargarReportes(); if(b.dataset.v==='productos')renderAdm();
+      if(b.dataset.v==='caja'){ location.href='/caja'; return; } if(b.dataset.v==='reportes'||b.dataset.v==='ganancias')cargarReportes(); if(b.dataset.v==='vender'||b.dataset.v==='productos'){ await cargarProductos(); if(b.dataset.v==='productos')renderAdm(); }
+    });
+  });
+
+  // ── Módulos de inicio: navegan a pestañas ──
+  document.querySelectorAll('.mod[data-go]').forEach(function(m){
+    m.addEventListener('click',function(){
+      var go=m.dataset.go;
+      var tab=go.startsWith('v-')?go.slice(2):go;
+      document.querySelectorAll('.tabs button').forEach(function(x){x.classList.remove('activo');});
+      document.querySelectorAll('.vista').forEach(function(x){x.classList.remove('activa');});
+      var btn=document.querySelector('.tabs button[data-v="'+tab+'"]');
+      if(btn){ btn.classList.add('activo'); document.getElementById('v-'+tab).classList.add('activa'); }
+      document.getElementById('carritoBar').style.display=(tab==='vender')?'flex':'none';
     });
   });
 
@@ -385,7 +435,9 @@
 
   // ── Reportes ──
   async function cargarReportes(){
-    var r=await api('/api/reportes/hoy'); var d=r.data; var cont=document.getElementById('reporteCuerpo');
+    var r=await api('/api/reportes/hoy'); var d=r.data;
+    if(d&&d.ok){ llenarGanancias(d.totales||{}); }
+    var cont=document.getElementById('reporteCuerpo');
     if(!d||!d.ok){ cont.innerHTML='<p style="color:#9ca3af;text-align:center;padding:30px">Sin datos</p>'; return; }
     var t=d.totales||{};
     var html='<div class="kpi">'
@@ -404,7 +456,15 @@
     cont.innerHTML=html;
   }
 
-  await cargarProductos();
+  function llenarGanancias(t){
+    document.getElementById('gananciaHoy').textContent=money(t.ganancia||0);
+    document.getElementById('ventasHoy').textContent=(t.ventas||0);
+    document.getElementById('ticketProm').textContent=(t.ventas?money(t.total/t.ventas):money(0));
+  }
+
+  // Inicio no carga productos: solo se carga al entrar a Vender o Productos (evita pantalla duplicada al arrancar)
+  var primerTab=document.querySelector('.tabs button.activo');
+  if(primerTab&&(primerTab.dataset.v==='vender'||primerTab.dataset.v==='productos')){ await cargarProductos(); }
 })();
 </script>
 </body>
