@@ -374,6 +374,7 @@ app.get('/api/ventas', exigirSesion, exigirPagoAlDia, async (req, res) => {
 // ── Vistas ──────────────────────────────────────────────────────────────────
 // ── Ruta directa a la Caja POS ──
 app.get('/caja', exigirSesion, exigirPagoAlDia, (req, res) => res.sendFile(path.join(__dirname, 'public', 'caja.html')));
+app.get('/caja/cierre', exigirSesion, exigirPagoAlDia, (req, res) => res.sendFile(path.join(__dirname, 'public', 'cierre.html')));
 
 // ── Estado del turno (caja abierta) ──
 app.get('/api/caja/estado', exigirSesion, exigirPagoAlDia, async (req, res) => {
@@ -397,6 +398,67 @@ app.get('/api/caja/arqueo', exigirSesion, exigirPagoAlDia, async (req, res) => {
     let esperado = Number(caja.saldo_inicial || 0) + Number(caja.total_ventas || 0);
     for (const m of movimientos) { if (m.tipo === 'ingreso') esperado += Number(m.importe || 0); else esperado -= Number(m.importe || 0); }
     res.json({ ok: true, turno: { caja: caja.id, usuario: 'Cajero', fechaapertura: caja.abierta_en, fondo: Number(caja.saldo_inicial || 0), ventasn: Number(ventas.n || 0), ventastotal: Number(ventas.total || 0) }, esperado, pagos: porMedio.map(p => ({ medio: p.medio_pago, monto: Number(p.monto || 0) })), movimientos: movimientos.map(m => ({ tipo: m.tipo, motivo: m.motivo || '', importe: Number(m.importe || 0) })) });
+  } catch (e) { res.status(500).json({ ok: false, mensaje: e.message }); }
+});
+
+// ── Cierre de caja (POST arqueo): guarda denominaciones, diferencia y bloquea caja ──
+app.post('/api/caja/arqueo', exigirSesion, exigirPagoAlDia, async (req, res) => {
+  const { pool } = require('./db-pg');
+  const c = await pool.connect();
+  try {
+    const caja = await get("SELECT * FROM cajas WHERE comercio_id = $1 AND estado = 'abierta' ORDER BY id DESC LIMIT 1", [req.comercio.id]);
+    if (!caja) return res.status(400).json({ ok: false, mensaje: 'No hay caja abierta' });
+    const contado = Number(req.body && req.body.contado || 0);
+    const denominaciones = req.body && req.body.denominaciones ? JSON.stringify(req.body.denominaciones) : null;
+    const auditoria = req.body && req.body.auditoria ? JSON.stringify(req.body.auditoria) : null;
+    const observaciones = (req.body && req.body.observaciones) || '';
+    // esperado = fondo + ventas + movimientos del turno
+    const movimientos = await all("SELECT tipo, importe FROM movimientos_caja WHERE comercio_id = $1 AND (caja_id = $2 OR caja_id IS NULL)", [req.comercio.id, caja.id]);
+    let esperado = Number(caja.saldo_inicial || 0) + Number(caja.total_ventas || 0);
+    for (const m of movimientos) { if (m.tipo === 'ingreso') esperado += Number(m.importe || 0); else esperado -= Number(m.importe || 0); }
+    esperado = Math.round(esperado * 100) / 100;
+    const diferencia = Math.round((contado - esperado) * 100) / 100;
+    await c.query('BEGIN');
+    // registrar cierre
+    await c.query(
+      `INSERT INTO cierres_caja (comercio_id, caja_id, usuario_id, fondo, ventas_total, esperado, contado, diferencia, denominaciones, auditoria, observaciones)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)`,
+      [req.comercio.id, caja.id, req.usuarioSesion.id, Number(caja.saldo_inicial || 0), Number(caja.total_ventas || 0), esperado, contado, diferencia, denominaciones, auditoria, observaciones]);
+    // bloquear caja
+    await c.query("UPDATE cajas SET estado='cerrada', saldo_final=$1, cerrada_en=now() WHERE id=$2", [contado, caja.id]);
+    await c.query('COMMIT');
+    res.json({ ok: true, cierre: { caja: caja.id, esperado, contado, diferencia, cerrada_en: new Date().toISOString() } });
+  } catch (e) {
+    await c.query('ROLLBACK');
+    res.status(500).json({ ok: false, mensaje: e.message });
+  } finally { c.release(); }
+});
+
+// ── Historial de cierres (para el buscador) ──
+app.get('/api/caja/cierres', exigirSesion, exigirPagoAlDia, async (req, res) => {
+  try {
+    const q = String(req.query.q || '').trim();
+    let rows;
+    if (q) {
+      // filtra por fecha (substring de fecha ISO) o monto (esperado/contado/diferencia)
+      rows = await all(
+        `SELECT id, caja_id, fondo, ventas_total, esperado, contado, diferencia, creada_en
+         FROM cierres_caja
+         WHERE comercio_id = $1
+           AND (to_char(creada_en,'YYYY-MM-DD') ILIKE '%'||$2||'%'
+                OR to_char(creada_en,'DD/MM/YYYY') ILIKE '%'||$2||'%'
+                OR CAST(esperado AS TEXT) ILIKE '%'||$2||'%'
+                OR CAST(contado AS TEXT) ILIKE '%'||$2||'%'
+                OR CAST(diferencia AS TEXT) ILIKE '%'||$2||'%')
+         ORDER BY creada_en DESC LIMIT 30`,
+        [req.comercio.id, q]);
+    } else {
+      rows = await all(
+        `SELECT id, caja_id, fondo, ventas_total, esperado, contado, diferencia, creada_en
+         FROM cierres_caja WHERE comercio_id = $1 ORDER BY creada_en DESC LIMIT 30`,
+        [req.comercio.id]);
+    }
+    res.json({ ok: true, cierres: rows });
   } catch (e) { res.status(500).json({ ok: false, mensaje: e.message }); }
 });
 

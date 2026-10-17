@@ -199,6 +199,67 @@
 
   .vacio{grid-column:1/-1;text-align:center;color:var(--texto2);padding:40px;font-weight:600}
   @media (max-width:560px){ .grilla{grid-template-columns:repeat(auto-fill,minmax(140px,1fr))} .brand h1{font-size:15px} }
+
+  /* ===== MODAL CONFIRMACIÓN CRÍTICA (venta) ===== */
+  .overlay{position:fixed;inset:0;z-index:1000;background:rgba(0,0,0,.7);backdrop-filter:blur(8px);display:none;align-items:center;justify-content:center;padding:24px}
+  .overlay.on{display:flex}
+  .modal{background:var(--bg2);border:1px solid var(--line);border-radius:20px;width:100%;max-width:460px;max-height:90vh;overflow:auto;box-shadow:0 20px 60px rgba(0,0,0,.6);animation:modalIn .22s ease}
+  @keyframes modalIn{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:translateY(0)}}
+  .modal .barra{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid var(--line)}
+  .modal .barra .t{font-size:17px;font-weight:900;color:var(--texto)}
+  .modal .barra .cerrar{width:32px;height:32px;border-radius:50%;background:var(--bg3);border:1px solid var(--line);display:flex;align-items:center;justify-content:center;font-size:18px;color:var(--texto2)}
+  .modal .cuerpo{padding:20px}
+  .modal .pie{display:flex;gap:10px;padding:14px 20px;border-top:1px solid var(--line);justify-content:flex-end}
+  .modal .btn-sec{padding:10px 20px;border-radius:12px;font-weight:900;font-size:14px;border:1px solid var(--line);background:transparent;color:var(--texto2)}
+  .modal .btn-sec:hover{background:var(--bg3)}
+  .modal .btn-ok{padding:10px 24px;border-radius:12px;font-weight:900;font-size:14px;background:var(--grad);color:#fff;box-shadow:0 8px 24px rgba(98,0,238,.45)}
+  .modal .btn-ok:active{transform:scale(.97)}
+  .modal .peligro{background:var(--peligro)}
+  .modal .advertencia{margin:10px 0;padding:12px 14px;border-radius:12px;background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.35);color:#FCA5A5;font-size:13px;font-weight:700}
+
+  /* ===== SELECTOR DE TICKET (venta) ===== */
+  .ticket-opciones{display:flex;flex-direction:column;gap:10px}
+  .ticket-opc{display:flex;align-items:center;gap:14px;padding:16px 18px;border-radius:14px;border:1.5px solid var(--line);background:var(--bg3);cursor:pointer;transition:.15s}
+  .ticket-opc:hover{border-color:var(--morado2);background:var(--bg2)}
+  .ticket-opc.sel{border-color:var(--oro);background:linear-gradient(135deg,rgba(245,197,24,.15),transparent);box-shadow:0 0 20px rgba(245,197,24,.18)}
+  .ticket-opc .ico{font-size:26px;flex:0 0 auto}
+  .ticket-opc .txt{flex:1}
+  .ticket-opc .txt .n{font-weight:900;font-size:15px;color:#fff}
+  .ticket-opc .txt .d{font-size:11.5px;color:var(--texto2)}
+  .ticket-opc .radio{width:22px;height:22px;border-radius:50%;border:2px solid var(--texto2);display:flex;align-items:center;justify-content:center;flex:0 0 auto}
+  .ticket-opc.sel .radio{border-color:var(--oro);background:var(--oro);color:#111}
+  .ticket-opc .radio::after{content:'✓';font-size:11px;font-weight:900;opacity:0}
+  .ticket-opc.sel .radio::after{opacity:1}
+
+  /* ===== VISTA PREVIA TICKET (venta) ===== */
+  .ticket-wrap{display:none;padding:24px 20px;border-radius:16px;border:1px solid var(--line);background:var(--bg2);margin-top:14px;max-height:62vh;overflow:auto}
+  .ticket-wrap.on{display:block}
+  .ticket{width:100%;max-width:340px;margin:0 auto;font-family:'Segoe UI',system-ui,sans-serif;font-size:13px;line-height:1.4;color:#222;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 10px 30px rgba(0,0,0,.45)}
+  .ticket.copia{width:100%;max-width:340px;margin:0 auto}
+  .ticket .cabecera{padding:14px 16px;background:linear-gradient(135deg,#4C6FFF,#7C3AED);color:#fff;text-align:center}
+  .ticket .cabecera .logo{font-size:28px;margin-bottom:6px;display:block}
+  .ticket .cabecera .nom{font-size:17px;font-weight:900;letter-spacing:1px}
+  .ticket .cabecera .sub{font-size:11px;opacity:.9;margin-top:2px}
+  .ticket .cuerpo{padding:12px 16px;border-bottom:1px solid #eee}
+  .ticket .fila{display:flex;justify-content:space-between;margin:5px 0}
+  .ticket .fila .lbl{color:#666}
+  .ticket .fila .val{font-weight:800}
+  .ticket .linea{border-top:1px solid #eee;margin:8px 0;padding-top:6px}
+  .ticket .total{font-size:18px;font-weight:900;color:#4C6FFF;margin-top:8px;padding-top:10px;border-top:2px solid #4C6FFF}
+  .ticket .pie{padding:12px 16px;font-size:11px;color:#888;text-align:center;border-top:1px solid #eee}
+  .ticket .firma{margin-top:16px;padding-top:12px;border-top:1px dashed #bbb;text-align:left}
+  .ticket .firma .line{display:inline-block;width:140px;border-bottom:1px solid #444;margin-bottom:4px}
+  .ticket .firma .nom{font-size:10.5px;color:#666}
+
+  /* ===== PRINT (venta) ===== */
+  @media print{
+    *{background:transparent!important;color:#000!important;box-shadow:none!important}
+    body{background:#fff!important;padding:0!important}
+    .no-print,.overlay,.pie,.btn-cerrar,.icon-btn,.buscador-wrap,.nota,.toast{display:none!important}
+    .ticket{display:block!important;width:auto!important;max-width:none!important;margin:0!important;box-shadow:none!important;border:none!important}
+    .ticket.copia{page-break-after:always}
+    @page{size:80mm auto;margin:0}
+  }
 </style>
 </head>
 <body>
@@ -307,6 +368,109 @@
 </div>
 
 <div id="toast" class="toast"></div>
+<!-- ===== MODAL: TICKET COMERCIO (venta) ===== -->
+<div class="overlay" id="overlayTicketComercioVenta">
+  <div class="modal" style="max-width:560px">
+    <div class="barra"><div class="t">🏪 Ticket Comercio — Venta</div><div class="cerrar" id="cerrarTicketComercioVenta">✕</div></div>
+    <div class="cuerpo" style="padding:0">
+      <div class="ticket-wrap on" id="wrapTicketComercioVenta">
+        <div class="ticket copia no-print">
+          <div class="cabecera"><span class="logo">🏪</span><div class="nom">360MAX — Comercio</div><div class="sub">Control interno · Venta</div></div>
+          <div class="cuerpo">
+            <div class="fila"><span class="lbl">Fecha</span><span class="val" id="tcomVFecha">—</span></div>
+            <div class="fila"><span class="lbl">Venta #</span><span class="val" id="tcomVVenta">—</span></div>
+            <div class="fila"><span class="lbl">Cajero</span><span class="val" id="tcomVCajero">—</span></div>
+            <div class="linea"></div>
+            <div class="fila"><span class="lbl">Método de pago</span><span class="val" id="tcomVMedio">—</span></div>
+            <div class="fila"><span class="lbl">Total</span><span class="val" id="tcomVTotal">—</span></div>
+            <div class="fila"><span class="lbl">Recibido</span><span class="val" id="tcomVRecibido">—</span></div>
+            <div class="fila"><span class="lbl">Vuelto</span><span class="val" id="tcomVVuelto">—</span></div>
+          </div>
+          <div class="firma">
+            <div>Firma del cajero: <span class="line"></span><span class="nom" id="tcomVFirma"></span></div>
+            <div style="margin-top:6px">Fecha: <span class="line" style="width:120px"></span></div>
+          </div>
+          <div class="pie">Documento interno de auditoría · 360MAX Comercios</div>
+        </div>
+      </div>
+      <div class="pie" style="padding:14px 20px;border-top:1px solid var(--line);justify-content:flex-end">
+        <button class="btn-sec" id="btnImprimirTicketComercioVenta">🖨 Imprimir este ticket</button>
+        <button class="btn-ok" id="btnDescartarTicketComercioVenta">Descartar</button>
+      </div>
+    </div>
+  </div>
+</div>
+<!-- ===== MODAL: TICKET CLIENTE (venta) ===== -->
+<div class="overlay" id="overlayTicketClienteVenta">
+  <div class="modal" style="max-width:560px">
+    <div class="barra"><div class="t">🧾 Ticket Cliente — Venta</div><div class="cerrar" id="cerrarTicketClienteVenta">✕</div></div>
+    <div class="cuerpo" style="padding:0">
+      <div class="ticket-wrap on" id="wrapTicketClienteVenta">
+        <div class="ticket copia no-print">
+          <div class="cabecera"><span class="logo">🧊</span><div class="nom">360MAX</div><div class="sub">PROYECT360MAX · Comprobante de Venta</div></div>
+          <div class="cuerpo">
+            <div class="fila"><span class="lbl">Fecha</span><span class="val" id="tcliVFecha">—</span></div>
+            <div class="fila"><span class="lbl">Venta #</span><span class="val" id="tcliVVenta">—</span></div>
+            <div class="linea"></div>
+            <div class="fila"><span class="lbl">Productos (detalle en carrito)</span><span class="val" id="tcliVItems">—</span></div>
+            <div class="fila"><span class="lbl">Método de pago</span><span class="val" id="tcliVMedio">—</span></div>
+            <div class="fila"><span class="lbl">Total</span><span class="val" id="tcliVTotal">—</span></div>
+            <div class="fila"><span class="lbl">Recibido</span><span class="val" id="tcliVRecibido">—</span></div>
+            <div class="fila"><span class="lbl">Vuelto</span><span class="val" id="tcliVVuelto">—</span></div>
+          </div>
+          <div class="pie">Gracias por tu compra · Comprobante no válido como factura</div>
+        </div>
+      </div>
+      <div class="pie" style="padding:14px 20px;border-top:1px solid var(--line);justify-content:flex-end">
+        <button class="btn-sec" id="btnImprimirTicketClienteVenta">🖨 Imprimir este ticket</button>
+        <button class="btn-ok" id="btnDescartarTicketClienteVenta">Descartar</button>
+      </div>
+    </div>
+  </div>
+</div>
+<!-- ===== MODAL: SELECCIÓN DE TICKET (venta) ===== -->
+<div class="overlay" id="overlaySeleccionarTicketVenta">
+  <div class="modal">
+    <div class="barra"><div class="t">🧾 Imprimir comprobante</div><div class="cerrar" id="cerrarSeleccionarTicketVenta">✕</div></div>
+    <div class="cuerpo">
+      <p style="margin:0 0 14px;color:var(--texto2);font-size:13.5px">La venta se registró correctamente. Elegí una opción:</p>
+      <div class="ticket-opciones">
+        <div class="ticket-opc sel" data-tipo="cliente"><div class="ico">🧾</div><div class="txt"><div class="n">Ticket Cliente</div><div class="d">Comprobante detallado para el cliente</div></div><div class="radio"></div></div>
+        <div class="ticket-opc" data-tipo="comercio"><div class="ico">🏪</div><div class="txt"><div class="n">Ticket Comercio</div><div class="d">Resumen interno con firma del cajero</div></div><div class="radio"></div></div>
+        <div class="ticket-opc" data-tipo="ninguno"><div class="ico">📱</div><div class="txt"><div class="n">No Imprimir</div><div class="d">Finalizar 100% digital (sin papel)</div></div><div class="radio"></div></div>
+      </div>
+    </div>
+    <div class="pie">
+      <button class="btn-sec" id="cerrarSeleccionarTicketVentaBtn">Más tarde</button>
+      <button class="btn-ok" id="btnProcesarTicketVenta">Continuar</button>
+    </div>
+  </div>
+</div>
+<!-- ===== MODAL: CONFIRMACIÓN CRÍTICA (venta) ===== -->
+<div class="overlay" id="overlayConfirmarVenta">
+  <div class="modal">
+    <div class="barra"><div class="t">⚠ Confirmar cobro</div><div class="cerrar" id="cerrarConfirmarVenta">✕</div></div>
+    <div class="cuerpo">
+      <div class="advertencia" id="msgAdvertenciaVenta" style="display:none">⚠ Revisá el monto recibido antes de continuar.</div>
+      <p style="margin:0 0 10px;color:var(--texto2)">¿Estás seguro de que deseas proceder con este cobro?</p>
+      <div class="fila" style="display:flex;gap:10px;margin-bottom:12px">
+        <span class="lbl" style="flex:1">Total</span><span class="val" id="confVTotal" style="font-weight:900;color:var(--texto)">$0</span>
+      </div>
+      <div class="fila" style="display:flex;gap:10px;margin-bottom:12px">
+        <span class="lbl" style="flex:1">Método de pago</span><span class="val" id="confVMedio" style="font-weight:900;color:var(--texto)">—</span>
+      </div>
+      <div class="fila" style="display:flex;gap:10px;margin-bottom:12px">
+        <span class="lbl" style="flex:1">Vuelto</span><span class="val" id="confVVuelto" style="font-weight:900">$0</span>
+      </div>
+      <label style="display:block;margin:8px 0 4px;font-size:12px;font-weight:700;color:var(--texto2)">Cliente (opcional)</label>
+      <input id="confVCliente" style="width:100%;border-radius:10px;border:1px solid var(--line);background:var(--bg3);color:#fff;padding:8px;font-size:13px"/>
+    </div>
+    <div class="pie">
+      <button class="btn-sec" id="cerrarConfirmarVentaBtn">Cancelar</button>
+      <button class="btn-ok peligro" id="btnConfirmarVenta">SÍ, COBRAR</button>
+    </div>
+  </div>
+</div>
 <script>
 'use strict';
 /* ============================================================
@@ -605,7 +769,16 @@ q('#cobroConfirmar').addEventListener('click',async()=>{
     const rec=num(q('#cobroRecibido').value);
     if(rec<totalCarrito()){ toast('El recibido es menor al total','error'); return; }
   }
-  cobrando=true; const btn=q('#cobroConfirmar'); const txt=btn.textContent; btn.textContent='PROCESANDO…'; btn.disabled=true;
+  // Confirmación crítica obligatoria (2 clics): abrir modal y esperar confirmación
+  q('#confVTotal').textContent=money(totalCarrito());
+  q('#confVMedio').textContent=(S.cobro.medio||'efectivo').toUpperCase();
+  const vv=S.cobro.medio==='efectivo'?Math.round((num(q('#cobroRecibido').value)-totalCarrito())*100)/100:0;
+  q('#confVVuelto').textContent=(vv>=0?'+':'')+money(vv);
+  q('#msgAdvertenciaVenta').style.display=(S.cobro.medio==='efectivo'&&vv<0)?'block':'none';
+  q('#confVCliente').value=q('#cobroCliente').value.trim()||'';
+  q('#modalCobro').classList.remove('on');
+  q('#overlayConfirmarVenta').classList.add('on');
+  return;
   try{
     const items=S.carrito.map(l=>({producto_id:l.id,cantidad:l.cantidad,precio:l.precio}));
     const r=await api('/api/ventas',{method:'POST',body:{items,medio_pago:S.cobro.medio,cliente:q('#cobroCliente').value.trim()||null}});
@@ -616,7 +789,7 @@ q('#cobroConfirmar').addEventListener('click',async()=>{
     S.carrito=[]; S.seleccion=-1; renderCarrito();
     q('#modalCobro').classList.remove('on');
     await refrescarTurno(); await cargarProductos();
-  } finally { cobrando=false; btn.textContent=txt; btn.disabled=false; }
+  } finally { cobrando=false; }
 });
 
 /* ============================================================
@@ -657,9 +830,8 @@ q('#auditoriaCerrar').addEventListener('click',()=>q('#modalAuditoria').classLis
    CIERRE DE CAJA / ARQUEO (pantalla a desarrollar después)
    ============================================================ */
 q('#btnCierre').addEventListener('click',()=>{
-  console.log('Navegando a Cierre de Caja');
   log('📊 Navegando a Cierre de Caja / Arqueo');
-  toast('Pantalla de Cierre de Caja: próximamente 🚧','ok');
+  window.location.href='/caja/cierre';
 });
 
 /* ============================================================
@@ -686,5 +858,76 @@ async function iniciar(){
 iniciar();
 </script>
 
+<script>
+/* ===== PERSISTENCIA LOCAL VENTAS (15 días) ===== */
+const LS_VENTAS_V='c360_ventas';const DIAS_V=15;
+function lsLeerV(k){try{return JSON.parse(localStorage.getItem(k)||'[]')}catch(e){return []}}
+function lsGuardarV(k,a){try{localStorage.setItem(k,JSON.stringify(a))}catch(e){}}
+function lsRecientesV(a){const corte=Date.now()-DIAS_V*24*60*60*1000;return a.filter(x=>{const f=x.fecha?new Date(x.fecha).getTime():0;return f>=corte})}
+(function limpiarLocalesAntiguosVenta(){
+  const v=lsRecientesV(lsLeerV(LS_VENTAS_V));lsGuardarV(LS_VENTAS_V,v);console.log('[local] ventas:',v.length);
+})();
+function guardarLocalVenta(v){const a=lsLeerV(LS_VENTAS_V);a.push({...v,fecha:new Date().toISOString(),origen:'local'});lsGuardarV(LS_VENTAS_V,a);}
+
+/* ===== MODALES: confirmación venta + doble ticket ===== */
+let tipoTicketVenta='cliente';
+const ovConfV=q('#overlayConfirmarVenta');const ovSelV=q('#overlaySeleccionarTicketVenta');
+const ovCliV=q('#overlayTicketClienteVenta');const ovComV=q('#overlayTicketComercioVenta');
+function cerrarTodoV(){ovConfV.classList.remove('on');ovSelV.classList.remove('on');ovCliV.classList.remove('on');ovComV.classList.remove('on');}
+qa('#cerrarConfirmarVenta,#cerrarConfirmarVentaBtn').forEach(b=>b.addEventListener('click',cerrarTodoV));
+qa('#cerrarSeleccionarTicketVenta,#cerrarSeleccionarTicketVentaBtn').forEach(b=>b.addEventListener('click',cerrarTodoV));
+qa('#cerrarTicketClienteVenta,#btnDescartarTicketClienteVenta').forEach(b=>b.addEventListener('click',cerrarTodoV));
+qa('#cerrarTicketComercioVenta,#btnDescartarTicketComercioVenta').forEach(b=>b.addEventListener('click',cerrarTodoV));
+qa('.ticket-opc').forEach(o=>o.addEventListener('click',function(){qa('.ticket-opc').forEach(x=>x.classList.remove('sel'));this.classList.add('sel');tipoTicketVenta=this.dataset.tipo;}));
+
+q('#btnConfirmarVenta').addEventListener('click',async()=>{
+  const btn=q('#btnConfirmarVenta');const txt=btn.textContent;btn.textContent='PROCESANDO…';btn.disabled=true;
+  try{
+    const medio=S.cobro.medio||'efectivo';
+    const recibido=medio==='efectivo'?num(q('#cobroRecibido').value):0;
+    if(medio==='efectivo'&&recibido<totalCarrito()){toast('El recibido es menor al total','error');return;}
+    const items=S.carrito.map(l=>({producto_id:l.id,cantidad:l.cantidad,precio:l.precio}));
+    const cliente=q('#confVCliente').value.trim()||null;
+    const r=await api('/api/ventas',{method:'POST',body:{items,medio_pago:medio,cliente}});
+    if(!r.ok){toast(r.data.mensaje||'No se pudo cobrar','error');log('Venta rechazada: '+(r.data.mensaje||''));return;}
+    const total=r.data.total;const vuelto=medio==='efectivo'?(recibido-total):0;
+    log('VENTA #'+r.data.venta_id+' cobrada — '+money(total)+' ('+medio+')'+(vuelto>0?' · Vuelto '+money(vuelto):''));
+    toast('Venta #'+r.data.venta_id+' cobrada — '+money(total)+(vuelto>0?' · Vuelto '+money(vuelto):''),'ok');
+    guardarLocalVenta({venta_id:r.data.venta_id,total,medio,recibido,vuelto,cliente,items:S.carrito.slice()});
+    S.carrito=[];S.seleccion=-1;renderCarrito();
+    q('#modalCobro').classList.remove('on');
+    await refrescarTurno();await cargarProductos();
+    cerrarTodoV();
+    ovSelV.classList.add('on');tipoTicketVenta='cliente';
+    qa('.ticket-opc').forEach(x=>x.classList.remove('sel'));qa('.ticket-opc[data-tipo="cliente"]').forEach(x=>x.classList.add('sel'));
+    window.SVenta={venta:r.data,total,medio,recibido,vuelto,cliente,fecha:new Date().toLocaleString('es-AR',{dateStyle:'short',timeStyle:'short'})};
+  }finally{btn.textContent=txt;btn.disabled=false;}
+});
+
+q('#btnProcesarTicketVenta').addEventListener('click',()=>{
+  const s=window.SVenta;if(!s){cerrarTodoV();return;}
+  if(tipoTicketVenta==='cliente'){rellenarTicketClienteVenta(s);ovCliV.classList.add('on');}
+  else if(tipoTicketVenta==='comercio'){rellenarTicketComercioVenta(s);ovComV.classList.add('on');}
+  else {toast('Venta finalizada sin imprimir (digital).','ok');}
+  cerrarTodoV();
+});
+
+function rellenarTicketClienteVenta(s){
+  q('#tcliVFecha').textContent=s.fecha;q('#tcliVVenta').textContent=s.venta.venta_id||'—';
+  q('#tcliVItems').textContent=(s.items&&s.items.length)?s.items.map(i=>i.cantidad+'x').join(', '):'—';
+  q('#tcliVMedio').textContent=s.medio;q('#tcliVTotal').textContent=money(s.total);
+  q('#tcliVRecibido').textContent=s.medio==='efectivo'?money(s.recibido):'—';
+  q('#tcliVVuelto').textContent=s.vuelto>0?money(s.vuelto):'—';
+}
+function rellenarTicketComercioVenta(s){
+  q('#tcomVFecha').textContent=s.fecha;q('#tcomVVenta').textContent=s.venta.venta_id||'—';
+  q('#tcomVCajero').textContent='Cajero';q('#tcomVMedio').textContent=s.medio;
+  q('#tcomVTotal').textContent=money(s.total);q('#tcomVRecibido').textContent=s.medio==='efectivo'?money(s.recibido):'—';
+  q('#tcomVVuelto').textContent=s.vuelto>0?money(s.vuelto):'—';
+  q('#tcomVFirma').textContent='Cajero';
+}
+q('#btnImprimirTicketClienteVenta').addEventListener('click',()=>window.print());
+q('#btnImprimirTicketComercioVenta').addEventListener('click',()=>window.print());
+</script>
 </body>
 </html>
