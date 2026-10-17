@@ -1,0 +1,95 @@
+<!doctype html><html lang="es"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1,viewport-fit=cover">
+<title>360MAX Deposito Control Total v2.1</title><style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Segoe UI,system-ui,Arial;background:#0d0620;color:#fff;padding-bottom:44px}
+.top{display:flex;gap:12px;align-items:center;padding:14px 18px;background:linear-gradient(120deg,#2a0a5e,#4c1d95);border-bottom:2px solid #f5c518;position:sticky;top:0;z-index:20}
+.top h1{font-size:18px;color:#ffd54f}.top small{color:#c4b5fd}
+.top a{margin-left:auto;color:#ffd54f;font-weight:800;text-decoration:none;border:1px solid #f5c518;padding:8px 12px;border-radius:10px}
+.wrap{max-width:1180px;margin:0 auto;padding:16px}
+.sec{background:linear-gradient(120deg,#3b1470,#5b21b6);border-radius:16px;padding:10px 16px;font-weight:900;color:#ffd54f;margin:14px 0 10px;letter-spacing:.4px}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.kpi{background:#17102e;border:1px solid #3a2a6e;border-radius:14px;padding:14px;text-align:center}
+.kpi .v{font-size:30px;font-weight:900;color:#ffd54f}.kpi .l{color:#c4b5fd;font-size:12px;margin-top:4px}
+.card{background:#17102e;border:1px solid #3a2a6e;border-radius:14px;padding:14px;margin-top:12px}
+.bus{width:100%;padding:13px;border-radius:12px;border:1px solid #7c3aed;background:#0f0a24;color:#fff;font-size:16px}
+.hint{color:#c4b5fd;font-size:12px;margin-top:6px}
+table{width:100%;border-collapse:collapse;font-size:13px;margin-top:10px}
+th{color:#ffd54f;text-align:left;padding:8px;border-bottom:1px solid #3a2a6e;font-size:11px;text-transform:uppercase}
+td{padding:8px;border-bottom:1px solid rgba(255,255,255,.07);vertical-align:middle}
+.btn{background:linear-gradient(120deg,#f5c518,#ffd54f);color:#3a2500;border:0;padding:11px 18px;border-radius:12px;font-weight:900;cursor:pointer}
+.btn2{background:rgba(255,255,255,.12);color:#fff;border:1px solid rgba(255,255,255,.3);padding:10px 14px;border-radius:10px;cursor:pointer;font-weight:700}
+.fila{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.fila input,.fila select{background:#0f0a24;border:1px solid #3a2a6e;color:#fff;border-radius:10px;padding:10px;flex:1;min-width:120px}
+.b-ok{background:#064e3b;color:#6ee7b7;padding:2px 8px;border-radius:8px;font-size:11px;font-weight:800}
+.b-warn{background:#7c2d12;color:#fdba74;padding:2px 8px;border-radius:8px;font-size:11px;font-weight:800}
+.b-pred{background:#7f1d1d;color:#fecaca;padding:2px 8px;border-radius:8px;font-size:11px;font-weight:800}
+.b-ven{background:#1e3a8a;color:#bfdbfe;padding:2px 8px;border-radius:8px;font-size:11px;font-weight:800}
+.tl{border-left:3px solid #7c3aed;margin:8px 0 0 6px;padding-left:12px;display:flex;flex-direction:column;gap:8px;max-height:300px;overflow:auto}
+.tl .it{background:#0f0a24;border:1px solid #3a2a6e;border-radius:10px;padding:8px 10px;cursor:pointer;font-size:12.5px}
+.tl .it.act{border-color:#f5c518}
+.det{font-size:13px;line-height:1.6}
+@media print{body{background:#fff;color:#000}.top a,.btn,.btn2,.fila input,.fila select,.bus{display:none!important}.card,.kpi,.tl .it{background:#fff;color:#000;border-color:#ccc}.kpi .v,.sec,th{color:#7c3aed}.sec{background:#f3e8ff}td,.det,.hint,.kpi .l{color:#000}}
+</style></head><body>
+<div class="top"><div><h1>DEPOSITO CONTROL TOTAL + AUDITORIA v2.1</h1><small>Buscador en vivo + regla de oro anti-duplicados + trazabilidad</small></div><a href="/panel">Volver</a></div>
+<div class="wrap">
+<div class="sec">DEPOSITO (superior) — stock real, alertas y movimientos</div>
+<div class="kpis"><div class="kpi"><div class="v" id="kMov">–</div><div class="l">Historial movimientos (mes)</div></div>
+<div class="kpi"><div class="v" id="kStock">–</div><div class="l">Stock (unidades en Queda)</div></div>
+<div class="kpi"><div class="v" id="kFalt">–</div><div class="l">Faltantes (bajo minimo)</div></div>
+<div class="kpi"><div class="v" id="kMer">–</div><div class="l">Mermas</div></div></div>
+<div class="card"><input id="bus" class="bus" placeholder="Buscar por nombre o codigo de barras... (escribe y filtra solo)" autocomplete="off">
+<div class="hint">Enter o codigo exacto = ingreso rapido +1 (adapta el original, jamas duplica). <span id="cont"></span></div>
+<div style="overflow:auto"><table><thead><tr><th>Producto</th><th>Ingresado</th><th>Vendido</th><th>Queda</th><th>Estado</th><th></th></tr></thead><tbody id="tb"></tbody></table></div></div>
+<div class="card"><b>Ingreso rapido (regla de oro: adapta, no duplica)</b>
+<div class="fila"><input id="iNom" placeholder="Nombre"><input id="iBar" placeholder="Codigo barras"><input id="iCant" type="number" value="1" style="max-width:90px"><input id="iCosto" type="number" placeholder="Costo" style="max-width:110px"><button class="btn" id="bIng">Ingresar</button></div></div>
+<div class="card"><b>CARGAR FACTURA (PDF/JPG simulado IA · CSV real)</b>
+<div class="fila"><input id="fNum" placeholder="N factura"><input id="fProv" placeholder="Proveedor"><input type="file" id="fFile" accept=".csv,.pdf,.jpg,.jpeg,.png"></div>
+<div class="fila"><button class="btn2" id="bPrev">1) Previsualizar</button><button class="btn" id="bConf">2) Confirmar ingreso</button></div>
+<div id="fPrev" class="hint"></div></div>
+<div class="sec">AUDITORIA (inferior) — filtros reales + trazabilidad + export</div>
+<div class="card"><div class="fila">
+<select id="fRango"><option value="hoy">Hoy</option><option value="7d" selected>Ultimos 7 dias</option><option value="30d">Ultimos 30 dias</option><option value="todo">Todo</option></select>
+<input type="date" id="fDesde"><input type="date" id="fHasta">
+<select id="fCaj"><option value="">Todos los cajeros</option></select>
+<select id="fTipo"><option value="todos">Todos los tipos</option><option value="venta">Venta</option><option value="ingreso">Ingreso</option><option value="cierre">Cierre</option><option value="ajuste">Ajuste</option><option value="merma">Merma</option></select>
+<button class="btn2" id="bFil">Filtrar</button>
+<button class="btn2" id="bCsv">Exportar Excel/CSV</button>
+<button class="btn2" id="bPdf">Exportar PDF (imprimir)</button>
+</div>
+<div style="display:grid;grid-template-columns:1.2fr .8fr;gap:12px;margin-top:10px" id="audGrid">
+<div><div class="tl" id="tl"></div><div class="fila"><button class="btn2" id="bPrev2">◀ Anteriores</button><button class="btn2" id="bNext">Siguientes ▶</button></div></div>
+<div class="det card" id="det">Toca un movimiento para ver el detalle (Ingreso factura - 50 productos).</div>
+</div></div>
+<script>
+(function(){var T=[],Q="",deb=null;
+function api(u,o){return fetch(u,{method:(o&&o.method)||"GET",headers:{"Content-Type":"application/json"},body:o&&o.body?JSON.stringify(o.body):undefined,credentials:"same-origin"}).then(function(r){return r.json().then(function(d){return{status:r.status,data:d}})}).catch(function(e){return{status:0,data:{ok:false,mensaje:String(e)}}})}
+function esc(s){return String(s==null?"":s).replace(/[&<>"]/g,function(c){return({"&":"&amp;","<":"&lt;",">":"&gt;","\u0022":"&quot;"}[c])})}
+function alerta48h(p){var v=Number(p.vendido_total||0),q=Number(p.stock||0);if(v<=0||q<=0)return false;var ritmo=v/7;if(ritmo<=0)return false;return (q/ritmo)<=2}
+function estado(p){var q=Number(p.stock||0),m=Number(p.stock_minimo||0);if(alerta48h(p))return '<span class="b-pred">QUIEBRE &lt;48H</span>';if(m>0&&q<=m)return '<span class="b-warn">FALTANTE</span>';if(q<=0)return '<span class="b-warn">SIN STOCK</span>';return '<span class="b-ok">OK</span>'}
+function render(){var q=Q.toLowerCase(),L=T.filter(function(p){return !q||String(p.nombre||"").toLowerCase().indexOf(q)>=0||String(p.codigo_barra||"").toLowerCase().indexOf(q)>=0});
+document.getElementById("cont").textContent=L.length+" / "+T.length+" productos";
+document.getElementById("tb").innerHTML=L.slice(0,120).map(function(p){return "<tr><td><b>"+esc(p.nombre)+"</b><br><small style='color:#c4b5fd'>"+esc(p.codigo_barra||"")+" · "+esc(p.categoria||"")+"</small></td><td>"+(p.ingresado_total||0)+"</td><td>"+(p.vendido_total||0)+"</td><td><b>"+(p.stock||0)+"</b></td><td>"+estado(p)+"</td><td><button class='btn2' data-id='"+p.id+"'>+1</button></td></tr>"}).join("")||"<tr><td colspan=6>Sin resultados</td></tr>"}
+function cargar(){api("/api/deposito/buscar?q="+encodeURIComponent(Q)).then(function(r){var l=(r.data&&r.data.productos)||[];T=l;render()})}
+var bus=document.getElementById("bus");
+bus.addEventListener("input",function(){Q=bus.value.trim();clearTimeout(deb);deb=setTimeout(cargar,120)});
+bus.addEventListener("keydown",function(e){if(e.key!=="Enter")return;var v=bus.value.trim();if(!v)return;var ex=T.filter(function(p){return String(p.codigo_barra||"")===v});var p=ex[0]||(T.length===1?T[0]:null);if(!p){if(ex.length)return;alert("Escribi un codigo exacto o deja un unico resultado para ingresar +1");return}api("/api/deposito/ingreso-rapido",{method:"POST",body:{producto_id:p.id,nombre:p.nombre,codigo_barra:p.codigo_barra,cantidad:1}}).then(function(){Q="";bus.value="";cargar();cargarMet()})});
+document.getElementById("tb").addEventListener("click",function(e){var b=e.target.closest("button[data-id]");if(!b)return;var p=null;for(var i=0;i<T.length;i++)if(String(T[i].id)===String(b.dataset.id))p=T[i];if(!p)return;api("/api/deposito/ingreso-rapido",{method:"POST",body:{producto_id:p.id,nombre:p.nombre,codigo_barra:p.codigo_barra,cantidad:1}}).then(function(){cargar();cargarMet()})});
+function cargarMet(){api("/api/deposito/metricas").then(function(r){var m=(r.data&&r.data.metricas)||{};document.getElementById("kMov").textContent=m.movimientos_mes||0;document.getElementById("kStock").textContent=m.stock_total||0;document.getElementById("kFalt").textContent=m.faltantes||0;document.getElementById("kMer").textContent=m.mermas||0})}
+cargar();cargarMet();window.__dep={recargar:cargar,recargarMet:cargarMet};
+function g(id){return document.getElementById(id)}
+g("bIng").addEventListener("click",function(){var b={nombre:g("iNom").value,codigo_barra:g("iBar").value,cantidad:Number(g("iCant").value||1),costo:Number(g("iCosto").value||0)};api("/api/deposito/ingreso-rapido",{method:"POST",body:b}).then(function(r){alert(r.data.ok?("OK: "+r.data.accion):("Error: "+r.data.mensaje));window.__dep.recargar();window.__dep.recargarMet()})});
+var FACT=[];
+g("bPrev").addEventListener("click",function(){var f=g("fFile").files[0];if(!f){alert("Elegi un archivo");return}var rd=new FileReader();rd.onload=function(){api("/api/deposito/factura/preview",{method:"POST",body:{archivo_nombre:f.name,archivo_tipo:f.type,texto:String(rd.result||"").slice(0,20000)}}).then(function(r){if(!r.data.ok){alert(r.data.mensaje);return}FACT=r.data.items||[];g("fPrev").textContent=(r.data.simulado?"IA simulada: ":"CSV real: ")+FACT.length+" items listos para confirmar"})};if(/csv|text/i.test(f.type)||/\.csv$/i.test(f.name))rd.readAsText(f);else rd.readAsDataURL(f)});
+g("bConf").addEventListener("click",function(){if(!FACT.length){alert("Primero previsualiza");return}api("/api/deposito/factura/confirmar",{method:"POST",body:{numero:g("fNum").value,proveedor:g("fProv").value,items:FACT}}).then(function(r){alert(r.data.ok?("OK: "+r.data.adaptados+" adaptados + "+r.data.creados+" creados ("+r.data.unidades+" u.)"):("Error: "+r.data.mensaje));FACT=[];g("fPrev").textContent="";window.__dep.recargar();window.__dep.recargarMet();cargarAud()})});
+var OFF=0,LIM=20,SEL=null;
+function rango(){var r=g("fRango").value,hoy=new Date(),f=function(d){return d.toISOString().slice(0,10)},h=new Date(hoy),d2=new Date(hoy);if(r==="hoy"){return{desde:f(h),hasta:f(h)}}if(r==="7d"){d2.setDate(d2.getDate()-7);return{desde:f(d2),hasta:f(h)}}if(r==="30d"){d2.setDate(d2.getDate()-30);return{desde:f(d2),hasta:f(h)}}return{desde:g("fDesde").value,hasta:g("fHasta").value}}
+function cargarCaj(){api("/api/deposito/usuarios").then(function(r){var u=(r.data&&r.data.usuarios)||[];g("fCaj").innerHTML='<option value="">Todos los cajeros</option>'+u.map(function(x){return '<option value="'+x.id+'">'+esc(x.nombre||x.usuario)+"</option>"}).join("")})}
+function cargarAud(){var rg=rango(),qs="limit="+LIM+"&offset="+OFF;if(rg.desde)qs+="&desde="+rg.desde;if(rg.hasta)qs+="&hasta="+rg.hasta;if(g("fCaj").value)qs+="&usuario_id="+g("fCaj").value;if(g("fTipo").value)qs+="&tipo="+g("fTipo").value;api("/api/deposito/historial?"+qs).then(function(r){var m=(r.data&&r.data.movimientos)||[];g("tl").innerHTML=m.map(function(x){return '<div class="it'+'" data-id="'+x.id+'">'+esc(x.creada_en?String(x.creada_en).slice(0,16):"")+" · <b>"+esc(x.tipo)+"</b> · "+esc(x.producto_nombre||x.motivo||"")+" · "+esc(x.cajero||"")+"</div>"}).join("")||"Sin movimientos"})})
+g("tl").addEventListener("click",function(e){var it=e.target.closest(".it");if(!it)return;SEL=it.dataset.id;var els=document.querySelectorAll("#tl .it");for(var i=0;i<els.length;i++)els[i].classList.remove("act");it.classList.add("act");api("/api/deposito/historial/"+SEL).then(function(r){var x=r.data&&r.data.movimiento;if(!x){g("det").textContent="Sin detalle";return}g("det").innerHTML="<b>"+esc(x.tipo)+" — "+esc(x.producto_nombre||"")+"</b><br>Fecha: "+esc(x.creada_en)+"<br>Cantidad: "+esc(x.cantidad)+" · Queda: "+esc(x.stock_despues)+"<br>Motivo: "+esc(x.motivo||"")+"<br>Cajero: "+esc(x.cajero||"")})});
+g("bFil").addEventListener("click",function(){OFF=0;cargarAud()});
+g("bPrev2").addEventListener("click",function(){OFF=Math.max(0,OFF-LIM);cargarAud()});
+g("bNext").addEventListener("click",function(){OFF+=LIM;cargarAud()});
+g("bCsv").addEventListener("click",function(){var rg=rango(),qs="";if(rg.desde)qs+="&desde="+rg.desde;if(rg.hasta)qs+="&hasta="+rg.hasta;if(g("fCaj").value)qs+="&usuario_id="+g("fCaj").value;if(g("fTipo").value)qs+="&tipo="+g("fTipo").value;window.open("/api/deposito/historial.csv?x=1"+qs,"_blank")});
+g("bPdf").addEventListener("click",function(){window.print()});
+cargarCaj();cargarAud();})();</script></div></body></html>

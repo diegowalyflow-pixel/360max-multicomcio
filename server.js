@@ -19,6 +19,8 @@ const path = require('path');
 const crypto = require('crypto');
 const { get, all, run, nuevaClave, verificarClave, DATABASE_URL } = require('./db-pg');
 const { exigirPagoAlDia, pantallaSuspension } = require('./corte-de-pago');
+let montarDeposito = null;
+try { montarDeposito = require('./deposito'); } catch (e) { console.error('[deposito] modulo no cargado:', e.message); }
 
 const app = express();
 const PORT = Number(process.env.PORT) || 4000;
@@ -178,7 +180,7 @@ app.post('/api/ventas', exigirSesion, exigirPagoAlDia, async (req, res) => {
       const precio = it.precio != null && it.precio !== '' ? Number(it.precio) : precioDe(p);
       const sub = Math.round(precio * cant * 100) / 100;
       total += sub; costo += Math.round(Number(p.costo || 0) * cant * 100) / 100;
-      await c.query('UPDATE productos SET stock = stock - $1 WHERE id = $2', [cant, pid]);
+      await c.query('UPDATE productos SET stock = stock - $1, vendido_total = COALESCE(vendido_total,0) + $1 WHERE id = $2', [cant, pid]);
       detalle.push({ producto_id: pid, nombre: p.nombre, cantidad: cant, precio_unit: precio, costo_unit: Number(p.costo || 0), subtotal: sub });
     }
     total = Math.round(total * 100) / 100; costo = Math.round(costo * 100) / 100;
@@ -186,10 +188,18 @@ app.post('/api/ventas', exigirSesion, exigirPagoAlDia, async (req, res) => {
     const v = (await c.query(
       "INSERT INTO ventas (comercio_id, caja_id, usuario_id, total, costo_total, medio_pago, cliente) VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING id",
       [req.comercio.id, caja ? caja.id : null, req.usuarioSesion.id, total, costo, medio_pago || 'efectivo', cliente || null])).rows[0];
+    // Auditoria Deposito: saber si existe la tabla de rastro (aditivo, no toca caja)
+    let auditarStock = false;
+    try { auditarStock = !!(await c.query("SELECT to_regclass('public.movimientos_stock') t")).rows[0].t; } catch (_) {}
     for (const d of detalle) {
       await c.query(
         "INSERT INTO venta_items (venta_id, producto_id, nombre, cantidad, precio_unit, costo_unit, subtotal) VALUES ($1,$2,$3,$4,$5,$6,$7)",
         [v.id, d.producto_id, d.nombre, d.cantidad, d.precio_unit, d.costo_unit, d.subtotal]);
+      // Auditoria Deposito: rastro de la venta en movimientos_stock (misma transaccion)
+      if (auditarStock) await c.query(
+        "INSERT INTO movimientos_stock (comercio_id, producto_id, producto_nombre, tipo, cantidad, stock_despues, motivo, usuario_id) " +
+        "SELECT $1,$2,$3,'venta',$4,COALESCE(stock,0),$5,$6 FROM productos WHERE id=$2 AND comercio_id=$1",
+        [req.comercio.id, d.producto_id, d.nombre, d.cantidad, 'Venta #' + v.id + (medio_pago ? ' · ' + medio_pago : ''), req.usuarioSesion.id]);
     }
     if (caja) await c.query("UPDATE cajas SET total_ventas = total_ventas + $1, cant_ventas = cant_ventas + 1 WHERE id = $2", [total, caja.id]);
     await c.query('COMMIT');
@@ -462,6 +472,8 @@ app.get('/api/caja/cierres', exigirSesion, exigirPagoAlDia, async (req, res) => 
   } catch (e) { res.status(500).json({ ok: false, mensaje: e.message }); }
 });
 
+// ── DEPOSITO CONTROL TOTAL & AUDITORIA v2.1 (modulo aditivo) ──
+
 // ── Movimiento de caja ──
 app.post('/api/caja/movimiento', exigirSesion, exigirPagoAlDia, async (req, res) => {
   try {
@@ -473,6 +485,9 @@ app.post('/api/caja/movimiento', exigirSesion, exigirPagoAlDia, async (req, res)
   } catch (e) { res.status(500).json({ ok: false, mensaje: e.message }); }
 });
 app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'public', 'index.html')));
+
+try { if (montarDeposito) { montarDeposito(app, { exigirSesion, exigirPagoAlDia }); console.log('[deposito] modulo activo (montaje unico)'); } }
+catch (e) { console.error('[deposito] mount:', e.message); }
 
 // Panel protegido: si el comercio está suspendido, exigirPagoAlDia corta con la
 // pantalla violeta/blanca; si está al día, sirve el panel (app.html).
