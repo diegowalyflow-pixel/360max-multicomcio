@@ -39,6 +39,30 @@
     display:flex;align-items:center;justify-content:center;font-size:26px;
     box-shadow:0 0 24px rgba(124,58,237,.55), inset 0 0 12px rgba(255,255,255,.15);
   }
+  /* ===== HEADER: MARCA + ESTADO DE CAJA + ACCIONES ===== */
+  .brand{flex:1;min-width:0}
+  .brand .marca{
+    font-size:10.5px;font-weight:900;letter-spacing:3px;color:var(--oro2);
+    text-transform:uppercase;line-height:1.2;
+  }
+  .brand h1{font-size:19px;font-weight:900;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .brand h1 span{color:var(--morado2);font-weight:800}
+  .topbar-acc{display:flex;align-items:center;justify-content:flex-end;gap:10px;flex-wrap:wrap}
+  .chip-est{
+    padding:8px 14px;border-radius:999px;font-size:12px;font-weight:900;letter-spacing:.5px;
+    border:1px solid var(--line);background:var(--bg3);color:var(--texto2);white-space:nowrap;
+  }
+  .chip-est.cerrado{color:#FCA5A5;border-color:rgba(239,68,68,.45);background:rgba(239,68,68,.14)}
+  .chip-est.abierto{
+    color:#6EE7B7;border-color:rgba(16,185,129,.45);background:rgba(16,185,129,.14);
+    box-shadow:0 0 16px rgba(16,185,129,.25);
+  }
+  .btn-ghost{
+    padding:9px 14px;border-radius:11px;font-size:13px;font-weight:800;color:#fff;
+    background:var(--bg3);border:1px solid var(--line);transition:.12s;white-space:nowrap;
+  }
+  .btn-ghost:hover{border-color:var(--morado2);background:rgba(98,0,238,.25)}
+  .btn-ghost:active{transform:scale(.97)}
   /* ===== BUSCADOR ===== */
   .buscador-wrap{position:relative;margin:18px 16px 8px}
   .buscador{
@@ -85,6 +109,16 @@
   .card:active{transform:scale(.96)}
   .card .icono{font-size:52px;line-height:1;filter:drop-shadow(0 4px 10px rgba(0,0,0,.5))}
   .card .nom{font-size:17px;font-weight:800;color:#fff;line-height:1.15;min-height:38px;display:flex;align-items:center;justify-content:center}
+  .card .precio{font-size:18px;font-weight:900;color:var(--oro2);letter-spacing:.3px}
+  .card .stock{
+    font-size:11px;font-weight:800;color:#6EE7B7;background:rgba(16,185,129,.12);
+    border:1px solid rgba(16,185,129,.32);padding:3px 9px;border-radius:999px;white-space:nowrap;
+  }
+  .card .stock.critico{color:#FCD34D;background:rgba(245,158,11,.14);border-color:rgba(245,158,11,.4)}
+  .card .hint{font-size:10.5px;font-weight:700;color:var(--texto2);letter-spacing:.3px}
+  .card.agotado{opacity:.45;filter:grayscale(.6);cursor:not-allowed}
+  .card.agotado:hover{transform:none;box-shadow:0 6px 22px rgba(0,0,0,.45)}
+  .card.agotado .stock{color:#FCA5A5;background:rgba(239,68,68,.14);border-color:rgba(239,68,68,.4)}
   /* ===== BARRA INFERIOR CARRITO ===== */
   .barra-inferior{
     position:fixed;left:0;right:0;bottom:0;z-index:50;display:flex;flex-direction:column;gap:10px;
@@ -113,8 +147,8 @@
   .btn-cobrar:disabled{opacity:.5;cursor:not-allowed;box-shadow:none}
 
   /* ===== PANEL LATERAL CARRITO ===== */
-  .overlay{position:fixed;inset:0;background:rgba(5,5,15,.7);backdrop-filter:blur(4px);z-index:60;opacity:0;pointer-events:none;transition:.2s}
-  .overlay.on{opacity:1;pointer-events:auto}
+  #overlay{position:fixed;inset:0;background:rgba(5,5,15,.7);backdrop-filter:blur(4px);z-index:60;opacity:0;pointer-events:none;transition:.2s}
+  #overlay.on{opacity:1;pointer-events:auto}
   .panel{
     position:fixed;top:0;right:0;bottom:0;width:min(430px,94vw);z-index:70;
     background:var(--bg2);border-left:1.5px solid transparent;
@@ -137,6 +171,25 @@
   .fila-item .sub{font-weight:900;color:var(--oro2);font-size:14px;min-width:74px;text-align:right}
   .ctrl-cant{display:flex;align-items:center;gap:6px}
   .ctrl-cant button{
+    width:30px;height:30px;border-radius:9px;font-size:17px;font-weight:900;line-height:1;
+    color:#fff;background:var(--grad);border:1px solid transparent;transition:.1s;
+  }
+  .ctrl-cant button:hover{filter:brightness(1.18)}
+  .ctrl-cant button:active{transform:scale(.92)}
+  .ctrl-cant span{min-width:38px;text-align:center;font-weight:900;font-size:14px;color:#fff}
+  /* ===== TOTAL DEL CARRITO + QUITAR ITEM ===== */
+  .fila-total{
+    display:flex;align-items:center;justify-content:space-between;gap:10px;
+    padding:12px 14px;border-radius:12px;background:rgba(98,0,238,.16);
+    border:1px solid rgba(124,58,237,.4);
+  }
+  .fila-total span{font-size:12px;font-weight:900;letter-spacing:2px;color:var(--texto2)}
+  .fila-total b{font-size:22px;font-weight:900;color:var(--oro2)}
+  .btn-del{
+    width:30px;height:30px;flex:0 0 auto;border-radius:9px;font-size:14px;font-weight:900;
+    color:#FCA5A5;background:rgba(239,68,68,.16);border:1px solid rgba(239,68,68,.4);transition:.12s;
+  }
+  .btn-del:hover{background:rgba(239,68,68,.32);color:#fff}
   /* ===== MODALES ===== */
   .modal{
     position:fixed;inset:0;z-index:80;display:none;align-items:center;justify-content:center;padding:16px;
@@ -203,19 +256,24 @@
   /* ===== MODAL CONFIRMACIÓN CRÍTICA (venta) ===== */
   .overlay{position:fixed;inset:0;z-index:1000;background:rgba(0,0,0,.7);backdrop-filter:blur(8px);display:none;align-items:center;justify-content:center;padding:24px}
   .overlay.on{display:flex}
-  .modal{background:var(--bg2);border:1px solid var(--line);border-radius:20px;width:100%;max-width:460px;max-height:90vh;overflow:auto;box-shadow:0 20px 60px rgba(0,0,0,.6);animation:modalIn .22s ease}
+  .overlay > .modal{
+    position:static;inset:auto;display:block;width:100%;max-width:460px;max-height:90vh;overflow:auto;
+    padding:0;background:var(--bg2);border:1px solid var(--line);border-radius:20px;
+    box-shadow:0 20px 60px rgba(0,0,0,.6);animation:modalIn .22s ease;backdrop-filter:none;z-index:auto;
+  }
   @keyframes modalIn{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:translateY(0)}}
-  .modal .barra{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid var(--line)}
-  .modal .barra .t{font-size:17px;font-weight:900;color:var(--texto)}
-  .modal .barra .cerrar{width:32px;height:32px;border-radius:50%;background:var(--bg3);border:1px solid var(--line);display:flex;align-items:center;justify-content:center;font-size:18px;color:var(--texto2)}
-  .modal .cuerpo{padding:20px}
-  .modal .pie{display:flex;gap:10px;padding:14px 20px;border-top:1px solid var(--line);justify-content:flex-end}
-  .modal .btn-sec{padding:10px 20px;border-radius:12px;font-weight:900;font-size:14px;border:1px solid var(--line);background:transparent;color:var(--texto2)}
-  .modal .btn-sec:hover{background:var(--bg3)}
-  .modal .btn-ok{padding:10px 24px;border-radius:12px;font-weight:900;font-size:14px;background:var(--grad);color:#fff;box-shadow:0 8px 24px rgba(98,0,238,.45)}
-  .modal .btn-ok:active{transform:scale(.97)}
-  .modal .peligro{background:var(--peligro)}
-  .modal .advertencia{margin:10px 0;padding:12px 14px;border-radius:12px;background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.35);color:#FCA5A5;font-size:13px;font-weight:700}
+  .overlay > .modal > .barra{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid var(--line)}
+  .overlay > .modal > .barra .t{font-size:17px;font-weight:900;color:var(--texto)}
+  .overlay > .modal > .barra .cerrar{width:32px;height:32px;border-radius:50%;background:var(--bg3);border:1px solid var(--line);display:flex;align-items:center;justify-content:center;font-size:18px;color:var(--texto2);cursor:pointer;flex:0 0 auto}
+  .overlay > .modal > .barra .cerrar:hover{border-color:var(--morado2);color:#fff}
+  .overlay > .modal > .cuerpo{padding:20px}
+  .overlay > .modal > .pie{display:flex;gap:10px;padding:14px 20px;border-top:1px solid var(--line);justify-content:flex-end;flex-wrap:wrap}
+  .overlay > .modal > .pie .btn-sec{padding:10px 20px;border-radius:12px;font-weight:900;font-size:14px;border:1px solid var(--line);background:transparent;color:var(--texto2);cursor:pointer}
+  .overlay > .modal > .pie .btn-sec:hover{background:var(--bg3)}
+  .overlay > .modal > .pie .btn-ok{padding:10px 24px;border-radius:12px;font-weight:900;font-size:14px;border:none;background:var(--grad);color:#fff;box-shadow:0 8px 24px rgba(98,0,238,.45);cursor:pointer}
+  .overlay > .modal > .pie .btn-ok:active{transform:scale(.97)}
+  .overlay > .modal > .pie .btn-ok.peligro{background:var(--peligro);box-shadow:0 8px 24px rgba(239,68,68,.4)}
+  .overlay .advertencia{margin:10px 0;padding:12px 14px;border-radius:12px;background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.35);color:#FCA5A5;font-size:13px;font-weight:700}
 
   /* ===== SELECTOR DE TICKET (venta) ===== */
   .ticket-opciones{display:flex;flex-direction:column;gap:10px}
@@ -254,9 +312,26 @@
   /* ===== PRINT (venta) ===== */
   @media print{
     *{background:transparent!important;color:#000!important;box-shadow:none!important}
-    body{background:#fff!important;padding:0!important}
-    .no-print,.overlay,.pie,.btn-cerrar,.icon-btn,.buscador-wrap,.nota,.toast{display:none!important}
-    .ticket{display:block!important;width:auto!important;max-width:none!important;margin:0!important;box-shadow:none!important;border:none!important}
+    html,body{background:#fff!important;height:auto;padding:0!important;overflow:visible!important}
+    header,.buscador-wrap,.atajos,.sec-titulo,#grilla,.barra-inferior,#overlay,#panelCarrito,
+    .toast,.no-print,.btn-cerrar,.icon-btn,.nota{display:none!important}
+    /* Sólo el ticket activo (overlay con .on) se imprime */
+    .overlay{display:none!important}
+    .overlay.on{
+      display:block!important;position:static!important;inset:auto;padding:0;z-index:auto!important;
+      background:transparent!important;backdrop-filter:none!important;
+    }
+    .overlay.on > .modal{
+      display:block!important;position:static!important;inset:auto;width:auto!important;
+      max-width:none!important;max-height:none!important;overflow:visible!important;
+      border:none!important;border-radius:0!important;background:transparent!important;
+      box-shadow:none!important;animation:none!important;backdrop-filter:none!important;
+    }
+    .overlay.on > .modal > .barra,.overlay.on > .modal > .pie{display:none!important}
+    .overlay.on > .modal > .cuerpo{padding:0!important}
+    .ticket-wrap{display:block!important;max-height:none!important;overflow:visible!important;padding:0!important;border:none!important;background:transparent!important;margin:0!important}
+    .ticket,.ticket.copia{display:block!important;width:auto!important;max-width:none!important;margin:0!important;box-shadow:none!important;border:none!important;overflow:visible!important}
+    .ticket .cabecera{background:transparent!important;border-bottom:2px solid #000}
     .ticket.copia{page-break-after:always}
     @page{size:80mm auto;margin:0}
   }
@@ -307,7 +382,7 @@
   <button id="btnCobrar" class="btn-cobrar" disabled>COBRAR — Finaliza la venta</button>
 </div>
 
-<div id="overlay" class="overlay"></div>
+<div id="overlay"></div>
 
 <aside id="panelCarrito" class="panel">
   <div class="panel-head">
@@ -374,7 +449,7 @@
     <div class="barra"><div class="t">🏪 Ticket Comercio — Venta</div><div class="cerrar" id="cerrarTicketComercioVenta">✕</div></div>
     <div class="cuerpo" style="padding:0">
       <div class="ticket-wrap on" id="wrapTicketComercioVenta">
-        <div class="ticket copia no-print">
+        <div class="ticket copia">
           <div class="cabecera"><span class="logo">🏪</span><div class="nom">360MAX — Comercio</div><div class="sub">Control interno · Venta</div></div>
           <div class="cuerpo">
             <div class="fila"><span class="lbl">Fecha</span><span class="val" id="tcomVFecha">—</span></div>
@@ -406,7 +481,7 @@
     <div class="barra"><div class="t">🧾 Ticket Cliente — Venta</div><div class="cerrar" id="cerrarTicketClienteVenta">✕</div></div>
     <div class="cuerpo" style="padding:0">
       <div class="ticket-wrap on" id="wrapTicketClienteVenta">
-        <div class="ticket copia no-print">
+        <div class="ticket copia">
           <div class="cabecera"><span class="logo">🧊</span><div class="nom">360MAX</div><div class="sub">PROYECT360MAX · Comprobante de Venta</div></div>
           <div class="cuerpo">
             <div class="fila"><span class="lbl">Fecha</span><span class="val" id="tcliVFecha">—</span></div>
@@ -762,14 +837,13 @@ function recalcularVuelto(){
 }
 q('#cobroCancelar').addEventListener('click',()=>q('#modalCobro').classList.remove('on'));
 
-let cobrando=false;
 q('#cobroConfirmar').addEventListener('click',async()=>{
-  if(cobrando)return;
   if(S.cobro.medio==='efectivo'){
     const rec=num(q('#cobroRecibido').value);
     if(rec<totalCarrito()){ toast('El recibido es menor al total','error'); return; }
   }
-  // Confirmación crítica obligatoria (2 clics): abrir modal y esperar confirmación
+  /* Confirmación crítica obligatoria (2 clics): mostramos el resumen y
+     recién con "SÍ, COBRAR" se envía la venta al servidor (ver más abajo). */
   q('#confVTotal').textContent=money(totalCarrito());
   q('#confVMedio').textContent=(S.cobro.medio||'efectivo').toUpperCase();
   const vv=S.cobro.medio==='efectivo'?Math.round((num(q('#cobroRecibido').value)-totalCarrito())*100)/100:0;
@@ -778,18 +852,6 @@ q('#cobroConfirmar').addEventListener('click',async()=>{
   q('#confVCliente').value=q('#cobroCliente').value.trim()||'';
   q('#modalCobro').classList.remove('on');
   q('#overlayConfirmarVenta').classList.add('on');
-  return;
-  try{
-    const items=S.carrito.map(l=>({producto_id:l.id,cantidad:l.cantidad,precio:l.precio}));
-    const r=await api('/api/ventas',{method:'POST',body:{items,medio_pago:S.cobro.medio,cliente:q('#cobroCliente').value.trim()||null}});
-    if(!r.ok){ toast(r.data.mensaje||'No se pudo cobrar','error'); log('✖ Venta rechazada: '+(r.data.mensaje||'')); return; }
-    const vuelto=S.cobro.medio==='efectivo'?(num(q('#cobroRecibido').value)-r.data.total):0;
-    log('✅ VENTA #'+r.data.venta_id+' cobrada — '+money(r.data.total)+' ('+S.cobro.medio+')'+(vuelto>0?' · Vuelto '+money(vuelto):''));
-    toast('✓ Venta #'+r.data.venta_id+' cobrada — '+money(r.data.total)+(vuelto>0?' · Vuelto '+money(vuelto):''),'ok');
-    S.carrito=[]; S.seleccion=-1; renderCarrito();
-    q('#modalCobro').classList.remove('on');
-    await refrescarTurno(); await cargarProductos();
-  } finally { cobrando=false; }
 });
 
 /* ============================================================
@@ -839,7 +901,7 @@ q('#btnCierre').addEventListener('click',()=>{
    ============================================================ */
 q('#btnSalir').addEventListener('click',async()=>{
   if(!confirm('¿Salir de la caja?'))return;
-  await api('/api/auth/logout',{method:'POST',body:{}});
+  await api('/api/logout',{method:'POST',body:{}});
   window.location.href='/';
 });
 
@@ -849,6 +911,7 @@ q('#btnSalir').addEventListener('click',async()=>{
 async function iniciar(){
   const ses=await api('/api/sesion');
   if(ses.status!==200||!ses.data.ok){ window.location.href='/'; return; }
+  window.UsuarioCaja=(ses.data.usuario&&ses.data.usuario.nombre)||'Cajero';
   await refrescarTurno();
   await cargarProductos();
   renderCarrito();
@@ -905,11 +968,12 @@ q('#btnConfirmarVenta').addEventListener('click',async()=>{
 });
 
 q('#btnProcesarTicketVenta').addEventListener('click',()=>{
-  const s=window.SVenta;if(!s){cerrarTodoV();return;}
-  if(tipoTicketVenta==='cliente'){rellenarTicketClienteVenta(s);ovCliV.classList.add('on');}
-  else if(tipoTicketVenta==='comercio'){rellenarTicketComercioVenta(s);ovComV.classList.add('on');}
-  else {toast('Venta finalizada sin imprimir (digital).','ok');}
-  cerrarTodoV();
+  const s=window.SVenta;
+  ovSelV.classList.remove('on');            /* cerramos SOLO el selector de ticket */
+  if(!s){ toast('No hay venta para imprimir','error'); return; }
+  if(tipoTicketVenta==='cliente'){ rellenarTicketClienteVenta(s); ovCliV.classList.add('on'); }
+  else if(tipoTicketVenta==='comercio'){ rellenarTicketComercioVenta(s); ovComV.classList.add('on'); }
+  else { toast('Venta finalizada sin imprimir (digital).','ok'); }
 });
 
 function rellenarTicketClienteVenta(s){
@@ -920,11 +984,12 @@ function rellenarTicketClienteVenta(s){
   q('#tcliVVuelto').textContent=s.vuelto>0?money(s.vuelto):'—';
 }
 function rellenarTicketComercioVenta(s){
+  const cajero=(window.UsuarioCaja||'Cajero');
   q('#tcomVFecha').textContent=s.fecha;q('#tcomVVenta').textContent=s.venta.venta_id||'—';
-  q('#tcomVCajero').textContent='Cajero';q('#tcomVMedio').textContent=s.medio;
+  q('#tcomVCajero').textContent=cajero;q('#tcomVMedio').textContent=s.medio;
   q('#tcomVTotal').textContent=money(s.total);q('#tcomVRecibido').textContent=s.medio==='efectivo'?money(s.recibido):'—';
   q('#tcomVVuelto').textContent=s.vuelto>0?money(s.vuelto):'—';
-  q('#tcomVFirma').textContent='Cajero';
+  q('#tcomVFirma').textContent=cajero;
 }
 q('#btnImprimirTicketClienteVenta').addEventListener('click',()=>window.print());
 q('#btnImprimirTicketComercioVenta').addEventListener('click',()=>window.print());
