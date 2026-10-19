@@ -554,6 +554,9 @@
 const q  = (s,r)=> (r||document).querySelector(s);
 const qa = (s,r)=> [...(r||document).querySelectorAll(s)];
 function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+/* Repara nombres que llegan corruptos del servidor (UTF-8 leído como latin-1 → "Ã©" en vez de "é"). */
+function fixTexto(s){const m={'Ã¡':'á','Ã©':'é','Ã­':'í','Ã³':'ó','Ãº':'ú','Ã±':'ñ','Ã¼':'ü','Ã':'Á','Ã‰':'É','Ã':'Í','Ã3':'Ó','Ãš':'Ú','Ã':'Ñ','Ã':'Ü'};return String(s==null?'':s).replace(/Ã./g,c=>m[c]||c);}
+
 function money(n){const u=Number(n||0);return '$'+u.toLocaleString('es-AR',{minimumFractionDigits:2,maximumFractionDigits:2});}
 function num(v){ if(v===''||v==null) return 0; const n=parseFloat(String(v).replace(/\./g,'').replace(',','.')); return isNaN(n)?0:n; }
 function cant(n){return Number(n||0).toLocaleString('es-AR',{minimumFractionDigits:2,maximumFractionDigits:2});}
@@ -620,7 +623,7 @@ function renderGrilla(){
     const stock=Number(p.stock||0), agotado=stock<=0;
     return '<div class="card'+(agotado?' agotado':'')+'" data-id="'+p.id+'" role="button" tabindex="0">'
       +'<div class="icono">'+iconoDe(p)+'</div>'
-      +'<div class="nom">'+esc(p.nombre)+'</div>'
+      +'<div class="nom">'+esc(fixTexto(p.nombre))+'</div>'
       +'<div class="precio">'+money(precioDe(p))+'</div>'
       +'<div class="stock'+(stock>0&&stock<=5?' critico':'')+'">'+(agotado?'Sin Stock':'Stock: Quedan '+stock)+'</div>'
       +'<div class="hint">'+(agotado?'No disponible ✖':'Toque = agrega al carrito')+'</div>'
@@ -703,7 +706,7 @@ function renderCarrito(){
   const body=q('#panelItems');
   body.innerHTML=S.carrito.length?S.carrito.map((l,i)=>
     '<div class="fila-item'+(i===S.seleccion?' sel':'')+'" data-i="'+i+'">'
-      +'<div class="nom"><b>'+esc(l.nombre)+'</b><small>'+money(l.precio)+' x '+cant(l.cantidad)+(l.unidad==='KG'?' kg':'')+'</small></div>'
+      +'<div class="nom"><b>'+esc(fixTexto(l.nombre))+'</b><small>'+money(l.precio)+' x '+cant(l.cantidad)+(l.unidad==='KG'?' kg':'')+'</small></div>'
       +'<div class="ctrl-cant">'
         +'<button data-act="menos" data-i="'+i+'">−</button>'
         +'<span>'+cant(l.cantidad)+'</span>'
