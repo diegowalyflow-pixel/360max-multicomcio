@@ -237,6 +237,8 @@
 <script>
 (async function(){
   function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];}); }
+  /* Repara nombres que llegan corruptos del servidor (UTF-8 leído como latin-1 -> "Ã©" en vez de "é"). */
+  function fixTexto(s){const m={'Ã¡':'á','Ã©':'é','Ã­':'í','Ã³':'ó','Ãº':'ú','Ã±':'ñ','Ã¼':'ü','Ã':'Á','Ã‰':'É','Ã':'Í','Ã3':'Ó','Ãš':'Ú','Ã':'Ñ','Ã':'Ü'};return String(s==null?'':s).replace(/Ã./g,c=>m[c]||c);}
   async function api(ruta, opciones){
     var r = await fetch(ruta, {
       method: (opciones && opciones.method) || 'GET',
@@ -299,7 +301,7 @@
     grid.innerHTML = list.map(function(x){
       var stock = Number(x.stock || 0), bajo = stock <= 0;
       return '<div class="card" data-id="' + x.id + '">'
-        + '<div class="nombre">' + esc(x.nombre) + '</div>'
+        + '<div class="nombre">' + esc(fixTexto(x.nombre)) + '</div>'
         + '<div class="cat">' + esc(x.categoria || '—') + '</div>'
         + '<div class="precio">' + money(precioDe(x)) + '</div>'
         + '<div class="stock' + (bajo ? ' bajo' : '') + '">' + (bajo ? 'Sin stock' : 'Quedan: ' + stock) + '</div>'
@@ -337,7 +339,7 @@
     document.getElementById('carritoBar').classList.toggle('vacio',n===0);
     var cont=document.getElementById('carritoItems');
     cont.innerHTML=carrito.map(function(c){
-      return '<div class="fila-item"><div class="nom">'+esc(c.nombre)+'<small>'+money(c.precio)+' c/u</small></div>'
+      return '<div class="fila-item"><div class="nom">'+esc(fixTexto(c.nombre))+'<small>'+money(c.precio)+' c/u</small></div>'
         +'<div class="cant"><button data-id="'+c.producto_id+'" data-d="-1">−</button><span>'+c.cantidad+'</span>'
         +'<button data-id="'+c.producto_id+'" data-d="1">+</button></div>'
         +'<div class="sub">'+money(c.precio*c.cantidad)+'</div></div>';
@@ -375,7 +377,7 @@
     var lista=productos.filter(function(x){ return !q || String(x.nombre).toLowerCase().indexOf(q)!==-1; });
     document.getElementById('listaProductos').innerHTML=lista.map(function(x){
       return '<div class="tarjeta"><div style="display:flex;justify-content:space-between;align-items:center">'
-        +'<div><div style="font-weight:700">'+esc(x.nombre)+'</div>'
+        +'<div><div style="font-weight:700">'+esc(fixTexto(x.nombre))+'</div>'
         +'<div style="font-size:12px;color:#8b5cf6">'+esc(x.categoria||'—')+' · stock '+Number(x.stock||0)+'</div></div>'
         +'<div style="text-align:right"><div style="font-weight:800;color:#4c1d95">'+money(precioDe(x))+'</div>'
         +'<div style="margin-top:6px"><button class="pill ok" data-a="stock" data-id="'+x.id+'">+ Stock</button> '
@@ -451,7 +453,7 @@
     }
     if(d.top&&d.top.length){
       html+='<div class="tarjeta"><h2 style="font-size:15px;color:#4c1d95;margin-bottom:8px">Más vendidos</h2>'
-        +d.top.map(function(m){ return '<div class="lista-item"><span>'+esc(m.nombre)+' ×'+Number(m.cantidad)+'</span><span style="font-weight:800">'+money(m.subtotal)+'</span></div>'; }).join('')+'</div>';
+        +d.top.map(function(m){ return '<div class="lista-item"><span>'+esc(fixTexto(m.nombre))+' ×'+Number(m.cantidad)+'</span><span style="font-weight:800">'+money(m.subtotal)+'</span></div>'; }).join('')+'</div>';
     }
     cont.innerHTML=html;
   }
